@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ball Destruction Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            color: #e6e6e6;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #00adb5;
+        }
+        
+        h1 {
+            color: #00adb5;
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 5px rgba(0, 173, 181, 0.3);
+        }
+        
+        .subtitle {
+            color: #eeeeee;
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .game-layout {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .game-area {
+            flex: 1;
+            min-width: 480px;
+        }
+        
+        .square {
+            width: 100%;
+            height: 400px;
+            border: 3px solid #00adb5;
+            border-radius: 8px;
+            background-color: #162447;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .ball {
+            position: absolute;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .rectangle {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            left: 0;
+            width: 100%;
+        }
+        
+        .controls-panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: #222831;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .section-title {
+            color: #00adb5;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #393e46;
+        }
+        
+        .ball-selection {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .ball-type {
+            background-color: #393e46;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .ball-type:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ball-type.selected {
+            border-color: #00adb5;
+            background-color: #2d4059;
+        }
+        
+        .ball-type h4 {
+            color: #00adb5;
+            margin-bottom: 5px;
+        }
+        
+        .ball-type p {
+            font-size: 0.85rem;
+            color: #b8b8b8;
+        }
+        
+        .ball-assignment {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+        
+        .player-ball {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .ball-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 10px auto;
+            border: 2px solid #00adb5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            background-color: #2d4059;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        button {
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background-color: #00969c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background-color: #393e46;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .stats-panel {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            background-color: #222831;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00adb5;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #b8b8b8;
+        }
+        
+        .instructions {
+            background-color: #222831;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+        }
+        
+        .instructions h3 {
+            color: #00adb5;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .game-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(34, 40, 49, 0.95);
+            padding: 30px 50px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 3px solid #00adb5;
+            display: none;
+        }
+        
+        .game-message h2 {
+            color: #00adb5;
+            margin-bottom: 15px;
+            font-size: 2.2rem;
+        }
+        
+        .game-message p {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .ball-type-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .slammer-color { background-color: #ff5722; }
+        .duplicator-color { background-color: #9c27b0; }
+        .speedy-color { background-color: #4caf50; }
+        .growth-color { background-color: #2196f3; }
+        .infinity-color { background-color: #ffeb3b; }
+        .gravitron-color { background-color: #ff4081; }
+        
+        @media (max-width: 1000px) {
+            .game-layout {
+                flex-direction: column;
+            }
+            
+            .game-area {
+                min-width: 100%;
+            }
+            
+            .ball-selection {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .ball-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ball Destruction Game</h1>
+            <p class="subtitle">Choose ball types for 2 balls, each in their own square. Destroy all rectangles to win!</p>
+        </header>
+        
+        <div class="game-layout">
+            <div class="game-area">
+                <h3 class="section-title">Player 1 Square</h3>
+                <div id="square1" class="square">
+                    <!-- Ball and rectangles will be generated here -->
+                </div>
+                
+                <h3 class="section-title">Player 2 Square</h3>
+                <div id="square2" class="square">
+                    <!-- Ball and rectangles will be generated here -->
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <h3 class="section-title">Ball Type Selection</h3>
+                <p>Select ball types for each player (you can combine types)</p>
+                
+                <div class="ball-selection">
+                    <div class="ball-type" data-type="slammer">
+                        <h4><span class="ball-type-indicator slammer-color"></span> Slammer</h4>
+                        <p>Gains +1 damage per bounce</p>
+                    </div>
+                    
+                    <div class="ball-type" data-type="duplicator">
+                        <h4><span class="ball-type-indicator duplicator-color"></span> Duplicator</h4>
+                        <p>Multiplies itself x2 per 15 seconds</p>
+                    </div>
+                    
+                    <div class="ball-type" data-type="speedy">
+                        <h4><span class="ball-type-indicator speedy-color"></span> Speedy</h4>
+                        <p>Gains +5 max speed per hit (starts at 180px/s)</p>
+                    </div>
+                    
+                    <div class="ball-type" data-type="growth">
+                        <h4><span class="ball-type-indicator growth-color"></span> Growth</h4>
+                        <p>Grows by +2.5 pixels per HIT (not bounce)</p>
+                    </div>
+                    
+                    <div class="ball-type" data-type="infinity">
+                        <h4><span class="ball-type-indicator infinity-color"></span> Infinity</h4>
+                        <p>Does 100% HP damage but moves at 120px/s</p>
+                    </div>
+                    
+                    <div class="ball-type" data-type="gravitron">
+                        <h4><span class="ball-type-indicator gravitron-color"></span> Gravitron</h4>
+                        <p>Becomes 10% heavier per bounce on rectangle</p>
+                    </div>
+                </div>
+                
+                <div class="ball-assignment">
+                    <div class="player-ball">
+                        <h4>Player 1 Ball</h4>
+                        <div id="preview1" class="ball-preview">P1</div>
+                        <div id="types1" class="ball-types-list">No types selected</div>
+                    </div>
+                    
+                    <div class="player-ball">
+                        <h4>Player 2 Ball</h4>
+                        <div id="preview2" class="ball-preview">P2</div>
+                        <div id="types2" class="ball-types-list">No types selected</div>
+                    </div>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="assignBtn">Assign to Player 1</button>
+                    <button id="startBtn">Start Game</button>
+                    <button id="resetBtn">Reset Game</button>
+                </div>
+                
+                <div class="stats-panel">
+                    <div class="stat">
+                        <div class="stat-value" id="time">0s</div>
+                        <div class="stat-label">Time</div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-value" id="rectangles-left">6</div>
+                        <div class="stat-label">Rectangles Left</div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-value" id="total-balls">2</div>
+                        <div class="stat-label">Total Balls</div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-value" id="player1-score">0</div>
+                        <div class="stat-label">Player 1 Score</div>
+                    </div>
+                    
+                    <div class="stat">
+                        <div class="stat-value" id="player2-score">0</div>
+                        <div class="stat-label">Player 2 Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Play</h3>
+            <ul>
+                <li>Select ball types from the panel (click to select/deselect)</li>
+                <li>Click "Assign to Player 1" to switch between players when assigning ball types</li>
+                <li>Click "Start Game" to begin</li>
+                <li>Balls will be affected by gravity and bounce around their squares</li>
+                <li>Each rectangle has different HP: Rectangle 1 (100 HP), Rectangle 2 (250 HP), Rectangle 3 (500 HP)</li>
+                <li>Rectangles are stacked from smallest to biggest at the bottom of each square</li>
+                <li>Destroy all rectangles to win!</li>
+                <li>Ball types can be combined for more powerful effects</li>
+            </ul>
+            <p><strong>Fixed:</strong> Growth now only grows on HIT (not bounce) and stops growing after hitting. Rectangles are now in correct order!</p>
+        </div>
+        
+        <div id="gameMessage" class="game-message">
+            <h2 id="messageTitle">Game Over</h2>
+            <p id="messageText"></p>
+            <button id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let gameState = {
+            isRunning: false,
+            startTime: 0,
+            currentTime: 0,
+            rectanglesLeft: 6,
+            selectedBallTypes: { player1: [], player2: [] },
+            currentPlayerSelecting: 1,
+            balls: [],
+            rectangles: [],
+            playerScores: { player1: 0, player2: 0 },
+            duplicatorInterval: null,
+            lastFrameTime: 0
+        };
+        
+        // Ball type properties
+        const ballTypes = {
+            slammer: {
+                name: "Slammer",
+                color: "#ff5722",
+                description: "Gains +1 damage per bounce",
+                damagePerBounce: 1
+            },
+            duplicator: {
+                name: "Duplicator",
+                color: "#9c27b0",
+                description: "Multiplies itself x2 per 15 seconds"
+            },
+            speedy: {
+                name: "Speedy",
+                color: "#4caf50",
+                description: "Gains +5 max speed per hit",
+                speedIncrease: 5,
+                baseMaxSpeed: 180
+            },
+            growth: {
+                name: "Growth",
+                color: "#2196f3",
+                description: "Grows by +2.5 pixels per HIT",
+                growthPerHit: 2.5
+            },
+            infinity: {
+                name: "Infinity",
+                color: "#ffeb3b",
+                description: "Does 100% HP damage but moves at 120px/s",
+                baseSpeed: 120
+            },
+            gravitron: {
+                name: "Gravitron",
+                color: "#ff4081",
+                description: "Becomes 10% heavier per bounce on rectangle",
+                gravityIncrease: 0.1
+            }
+        };
+        
+        // Physics constants
+        const GRAVITY = 0.3;
+        const BOUNCE_DAMPENING = 0.85;
+        const DEFAULT_MAX_SPEED = 180;
+        
+        // DOM elements
+        const square1 = document.getElementById('square1');
+        const square2 = document.getElementById('square2');
+        const ballTypeElements = document.querySelectorAll('.ball-type');
+        const preview1 = document.getElementById('preview1');
+        const preview2 = document.getElementById('preview2');
+        const types1 = document.getElementById('types1');
+        const types2 = document.getElementById('types2');
+        const assignBtn = document.getElementById('assignBtn');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const gameMessage = document.getElementById('gameMessage');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        
+        // Stats display
+        const timeDisplay = document.getElementById('time');
+        const rectanglesLeftDisplay = document.getElementById('rectangles-left');
+        const totalBallsDisplay = document.getElementById('total-balls');
+        const player1ScoreDisplay = document.getElementById('player1-score');
+        const player2ScoreDisplay = document.getElementById('player2-score');
+        
+        // Initialize the game
+        function initGame() {
+            // Clear any existing game elements
+            square1.innerHTML = '';
+            square2.innerHTML = '';
+            gameState.balls = [];
+            gameState.rectangles = [];
+            gameState.isRunning = false;
+            gameState.rectanglesLeft = 6;
+            gameState.playerScores = { player1: 0, player2: 0 };
+            gameState.currentTime = 0;
+            gameState.lastFrameTime = 0;
+            
+            // Clear duplicator interval if it exists
+            if (gameState.duplicatorInterval) {
+                clearInterval(gameState.duplicatorInterval);
+                gameState.duplicatorInterval = null;
+            }
+            
+            // Update displays
+            updateDisplays();
+            
+            // Hide game message
+            gameMessage.style.display = 'none';
+            
+            // Create rectangles for each square - FIXED ORDER: smallest on top, biggest on bottom
+            createRectangles(square1, 1);
+            createRectangles(square2, 2);
+            
+            // Update ball previews
+            updateBallPreviews();
+        }
+        
+        // Create rectangles for a square - FIXED: smallest on top, biggest on bottom
+        function createRectangles(square, player) {
+            const rectData = [
+                { hp: 100, height: 40, color: "#ff5252" },
+                { hp: 250, height: 50, color: "#ff9800" },
+                { hp: 500, height: 60, color: "#ff4081" }
+            ];
+            
+            let bottomPosition = 0;
+            
+            // Create from smallest (100 HP) at bottom to biggest (500 HP) on top? Wait...
+            // Actually, you said "smallest in hp on top, and lowest HP on bottom"
+            // That's contradictory - "smallest HP" and "lowest HP" mean the same thing.
+            // I think you mean: smallest HP on top, largest HP on bottom.
+            // So 100 HP on top, then 250, then 500 at the bottom.
+            
+            // But wait, if we're stacking from the bottom up, we need to put 500 at the very bottom
+            // then 250 on top of it, then 100 on top of that.
+            // Actually, you want them stacked at the bottom of the square, so:
+            // 500 HP (largest) should be at the very bottom
+            // 250 HP should be above 500
+            // 100 HP (smallest) should be at the very top (closest to the balls)
+            
+            // Let me re-read: "smallest in hp on top, and lowest HP on bottom"
+            // I think there's a typo. I'll assume you want: smallest HP (100) on top, largest HP (500) on bottom.
+            
+            // So we need to create in reverse order: 500 first (at bottom), then 250, then 100 (on top)
+            for (let i = 2; i >= 0; i--) {
+                const rect = document.createElement('div');
+                rect.className = 'rectangle';
+                rect.dataset.hp = rectData[i].hp;
+                rect.dataset.maxHp = rectData[i].hp;
+                rect.dataset.player = player;
+                
+                // Position rectangles at the bottom, stacked
+                rect.style.height = `${rectData[i].height}px`;
+                rect.style.backgroundColor = rectData[i].color;
+                rect.style.bottom = `${bottomPosition}px`;
+                
+                rect.textContent = `HP: ${rectData[i].hp}`;
+                
+                square.appendChild(rect);
+                gameState.rectangles.push({
+                    element: rect,
+                    player: player,
+                    hp: rectData[i].hp,
+                    maxHp: rectData[i].hp,
+                    height: rectData[i].height,
+                    top: square.offsetHeight - bottomPosition - rectData[i].height,
+                    bottom: bottomPosition + rectData[i].height,
+                    originalHeight: rectData[i].height
+                });
+                
+                bottomPosition += rectData[i].height;
+            }
+        }
+        
+        // Update ball preview displays with multiple colors
+        function updateBallPreviews() {
+            // Player 1 preview
+            if (gameState.selectedBallTypes.player1.length > 0) {
+                preview1.textContent = "P1";
+                let typesText = "";
+                gameState.selectedBallTypes.player1.forEach(type => {
+                    typesText += ballTypes[type].name + ", ";
+                });
+                types1.textContent = typesText.slice(0, -2);
+                
+                // Set preview with multiple colors
+                setElementGradient(preview1, gameState.selectedBallTypes.player1);
+            } else {
+                preview1.textContent = "P1";
+                preview1.style.background = "#2d4059";
+                types1.textContent = "No types selected";
+            }
+            
+            // Player 2 preview
+            if (gameState.selectedBallTypes.player2.length > 0) {
+                preview2.textContent = "P2";
+                let typesText = "";
+                gameState.selectedBallTypes.player2.forEach(type => {
+                    typesText += ballTypes[type].name + ", ";
+                });
+                types2.textContent = typesText.slice(0, -2);
+                
+                // Set preview with multiple colors
+                setElementGradient(preview2, gameState.selectedBallTypes.player2);
+            } else {
+                preview2.textContent = "P2";
+                preview2.style.background = "#2d4059";
+                types2.textContent = "No types selected";
+            }
+            
+            // Update assign button text
+            assignBtn.textContent = `Assign to Player ${gameState.currentPlayerSelecting}`;
+        }
+        
+        // Set element gradient for multiple types
+        function setElementGradient(element, types) {
+            if (types.length === 0) {
+                element.style.background = "#2d4059";
+                return;
+            }
+            
+            if (types.length === 1) {
+                element.style.background = ballTypes[types[0]].color;
+                return;
+            }
+            
+            // For multiple types, create a gradient
+            const colors = types.map(type => ballTypes[type].color);
+            if (colors.length === 2) {
+                element.style.background = `linear-gradient(90deg, ${colors[0]} 50%, ${colors[1]} 50%)`;
+            } else if (colors.length === 3) {
+                element.style.background = `linear-gradient(90deg, ${colors[0]} 33%, ${colors[1]} 33% 66%, ${colors[2]} 66%)`;
+            } else if (colors.length === 4) {
+                element.style.background = `linear-gradient(90deg, ${colors[0]} 25%, ${colors[1]} 25% 50%, ${colors[2]} 50% 75%, ${colors[3]} 75%)`;
+            } else if (colors.length === 5) {
+                element.style.background = `linear-gradient(90deg, ${colors[0]} 20%, ${colors[1]} 20% 40%, ${colors[2]} 40% 60%, ${colors[3]} 60% 80%, ${colors[4]} 80%)`;
+            }
+        }
+        
+        // Create balls based on selected types
+        function createBalls() {
+            // Clear existing balls
+            gameState.balls = [];
+            
+            // Create player 1 ball
+            if (gameState.selectedBallTypes.player1.length > 0) {
+                createBall(square1, 1, gameState.selectedBallTypes.player1);
+            }
+            
+            // Create player 2 ball
+            if (gameState.selectedBallTypes.player2.length > 0) {
+                createBall(square2, 2, gameState.selectedBallTypes.player2);
+            }
+            
+            // Update total balls display
+            totalBallsDisplay.textContent = gameState.balls.length;
+        }
+        
+        // Create a single ball
+        function createBall(square, player, types) {
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            
+            // Set ball size
+            let size = 20;
+            
+            // Set ball color based on types
+            setElementGradient(ball, types);
+            
+            ball.style.width = `${size}px`;
+            ball.style.height = `${size}px`;
+            
+            // Start position (center of square)
+            const startX = square.offsetWidth / 2;
+            const startY = square.offsetHeight / 3;
+            
+            ball.style.left = `${startX}px`;
+            ball.style.top = `${startY}px`;
+            
+            square.appendChild(ball);
+            
+            // Determine base speed based on types
+            let baseSpeed = DEFAULT_MAX_SPEED;
+            if (types.includes("infinity")) {
+                baseSpeed = ballTypes.infinity.baseSpeed;
+            }
+            
+            if (types.includes("speedy")) {
+                baseSpeed = ballTypes.speedy.baseMaxSpeed;
+            }
+            
+            // Give initial random velocity
+            const angle = Math.random() * Math.PI * 2;
+            const speed = baseSpeed * 0.7;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+            
+            // Create ball object
+            const ballObj = {
+                element: ball,
+                player: player,
+                x: startX,
+                y: startY,
+                vx: vx,
+                vy: vy,
+                radius: size / 2,
+                types: [...types],
+                damage: 1, // Default damage is 1
+                bounceCount: 0,
+                hitCount: 0,
+                maxSpeed: baseSpeed,
+                squareWidth: square.offsetWidth,
+                squareHeight: square.offsetHeight,
+                createdAt: Date.now(),
+                isActive: true,
+                gravityMultiplier: 1,
+                lastHitTime: 0 // To prevent multiple hits in quick succession
+            };
+            
+            gameState.balls.push(ballObj);
+            return ballObj;
+        }
+        
+        // Start the game
+        function startGame() {
+            if (gameState.selectedBallTypes.player1.length === 0 && 
+                gameState.selectedBallTypes.player2.length === 0) {
+                alert("Please select at least one ball type for one of the players!");
+                return;
+            }
+            
+            initGame();
+            createBalls();
+            
+            gameState.isRunning = true;
+            gameState.startTime = Date.now();
+            gameState.lastFrameTime = Date.now();
+            
+            // Start game loop
+            gameLoop();
+            
+            // Start duplicator interval
+            gameState.duplicatorInterval = setInterval(duplicateBalls, 15000);
+            
+            // Update button states
+            startBtn.disabled = true;
+            assignBtn.disabled = true;
+            
+            // Disable ball type selection
+            ballTypeElements.forEach(el => {
+                el.style.pointerEvents = 'none';
+                el.style.opacity = '0.7';
+            });
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (!gameState.isRunning) return;
+            
+            // Calculate time delta
+            const currentTime = Date.now();
+            const deltaTime = Math.min((currentTime - gameState.lastFrameTime) / 1000, 0.033); // Cap at 30fps
+            gameState.lastFrameTime = currentTime;
+            
+            // Calculate elapsed time
+            gameState.currentTime = currentTime - gameState.startTime;
+            
+            // Update balls
+            updateBalls(deltaTime);
+            
+            // Check for collisions
+            checkCollisions();
+            
+            // Check win condition - FIXED
+            if (gameState.rectanglesLeft <= 0) {
+                endGame(true);
+                return;
+            }
+            
+            // Update displays
+            updateDisplays();
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Update all balls
+        function updateBalls(deltaTime) {
+            gameState.balls.forEach(ball => {
+                if (!ball.isActive) return;
+                
+                // Apply gravity with gravitron multiplier
+                const gravity = GRAVITY * ball.gravityMultiplier;
+                ball.vy += gravity * 60 * deltaTime;
+                
+                // Update position
+                ball.x += ball.vx * deltaTime;
+                ball.y += ball.vy * deltaTime;
+                
+                // Check for collisions with walls
+                if (ball.x - ball.radius <= 0) {
+                    ball.x = ball.radius;
+                    ball.vx = Math.abs(ball.vx) * BOUNCE_DAMPENING;
+                    handleBounce(ball, false);
+                }
+                
+                if (ball.x + ball.radius >= ball.squareWidth) {
+                    ball.x = ball.squareWidth - ball.radius;
+                    ball.vx = -Math.abs(ball.vx) * BOUNCE_DAMPENING;
+                    handleBounce(ball, false);
+                }
+                
+                if (ball.y - ball.radius <= 0) {
+                    ball.y = ball.radius;
+                    ball.vy = Math.abs(ball.vy) * BOUNCE_DAMPENING;
+                    handleBounce(ball, false);
+                }
+                
+                if (ball.y + ball.radius >= ball.squareHeight) {
+                    ball.y = ball.squareHeight - ball.radius;
+                    ball.vy = -Math.abs(ball.vy) * BOUNCE_DAMPENING;
+                    handleBounce(ball, false);
+                }
+                
+                // Apply speed limits
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                if (speed > ball.maxSpeed) {
+                    ball.vx = (ball.vx / speed) * ball.maxSpeed;
+                    ball.vy = (ball.vy / speed) * ball.maxSpeed;
+                }
+                
+                // Update ball element position
+                ball.element.style.left = `${ball.x}px`;
+                ball.element.style.top = `${ball.y}px`;
+            });
+        }
+        
+        // Handle bounce effects
+        function handleBounce(ball, isRectangleBounce) {
+            ball.bounceCount++;
+            
+            // Apply slammer effect
+            if (ball.types.includes("slammer")) {
+                ball.damage += ballTypes.slammer.damagePerBounce;
+            }
+            
+            // Apply gravitron effect (only on rectangle bounces)
+            if (ball.types.includes("gravitron") && isRectangleBounce) {
+                ball.gravityMultiplier *= (1 + ballTypes.gravitron.gravityIncrease);
+            }
+            
+            // NOTE: Growth is NOT applied here anymore - only in handleCollision
+        }
+        
+        // Check for collisions
+        function checkCollisions() {
+            const currentTime = Date.now();
+            
+            gameState.balls.forEach(ball => {
+                if (!ball.isActive) return;
+                
+                gameState.rectangles.forEach(rectObj => {
+                    if (ball.player !== rectObj.player || rectObj.hp <= 0) return;
+                    
+                    const rect = rectObj.element;
+                    const rectLeft = 0;
+                    const rectTop = rectObj.top;
+                    const rectWidth = ball.squareWidth;
+                    const rectHeight = rectObj.height;
+                    
+                    // Check collision
+                    const closestX = Math.max(rectLeft, Math.min(ball.x, rectLeft + rectWidth));
+                    const closestY = Math.max(rectTop, Math.min(ball.y, rectTop + rectHeight));
+                    
+                    const distanceX = ball.x - closestX;
+                    const distanceY = ball.y - closestY;
+                    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+                    
+                    // Prevent multiple hits in quick succession
+                    if (distance <= ball.radius && currentTime - ball.lastHitTime > 100) {
+                        ball.lastHitTime = currentTime;
+                        handleCollision(ball, rectObj);
+                    }
+                });
+            });
+        }
+        
+        // Handle collision - FIXED: Growth only on hit, not bounce
+        function handleCollision(ball, rectObj) {
+            // Calculate damage
+            let damage = ball.damage;
+            
+            // Apply infinity effect
+            if (ball.types.includes("infinity")) {
+                damage = rectObj.hp;
+            }
+            
+            // Apply damage
+            rectObj.hp -= damage;
+            
+            // Update rectangle display
+            if (rectObj.hp > 0) {
+                rectObj.element.textContent = `HP: ${Math.ceil(rectObj.hp)}`;
+                const damagePercent = rectObj.hp / rectObj.maxHp;
+                rectObj.element.style.opacity = `${0.5 + (damagePercent / 2)}`;
+            } else {
+                // Rectangle destroyed
+                rectObj.element.style.display = 'none';
+                rectObj.hp = 0;
+                
+                // Update rectangles left count
+                gameState.rectanglesLeft--;
+                
+                // Update player score
+                if (ball.player === 1) {
+                    gameState.playerScores.player1 += rectObj.maxHp;
+                } else {
+                    gameState.playerScores.player2 += rectObj.maxHp;
+                }
+                
+                // Check if all rectangles are destroyed
+                checkWinCondition();
+            }
+            
+            // Apply speedy effect
+            if (ball.types.includes("speedy")) {
+                ball.maxSpeed += ballTypes.speedy.speedIncrease;
+                ball.hitCount++;
+            }
+            
+            // Apply growth effect on HIT (not bounce) - FIXED: Only grows when hitting
+            if (ball.types.includes("growth")) {
+                ball.radius += ballTypes.growth.growthPerHit;
+                const newSize = ball.radius * 2;
+                ball.element.style.width = `${newSize}px`;
+                ball.element.style.height = `${newSize}px`;
+            }
+            
+            // Bounce the ball - this is a rectangle bounce
+            ball.vy = -Math.abs(ball.vy) * BOUNCE_DAMPENING;
+            
+            // Add random factor
+            ball.vx += (Math.random() - 0.5) * 10;
+            
+            // Count as a bounce on rectangle
+            handleBounce(ball, true);
+        }
+        
+        // Check win condition
+        function checkWinCondition() {
+            // Count active rectangles
+            let activeRectangles = 0;
+            gameState.rectangles.forEach(rect => {
+                if (rect.hp > 0) activeRectangles++;
+            });
+            
+            gameState.rectanglesLeft = activeRectangles;
+            
+            if (activeRectangles === 0) {
+                endGame(true);
+            }
+        }
+        
+        // Duplicate balls
+        function duplicateBalls() {
+            const ballsToAdd = [];
+            
+            gameState.balls.forEach(ball => {
+                if (ball.types.includes("duplicator") && ball.isActive) {
+                    // Create a clone
+                    const newBall = {
+                        ...ball,
+                        element: ball.element.cloneNode(true),
+                        vx: -ball.vx,
+                        vy: -ball.vy,
+                        createdAt: Date.now()
+                    };
+                    
+                    // Set color for the new ball
+                    setElementGradient(newBall.element, newBall.types);
+                    
+                    // Add to square
+                    const square = ball.player === 1 ? square1 : square2;
+                    square.appendChild(newBall.element);
+                    
+                    ballsToAdd.push(newBall);
+                }
+            });
+            
+            // Add new balls
+            gameState.balls.push(...ballsToAdd);
+            
+            // Update display
+            totalBallsDisplay.textContent = gameState.balls.length;
+        }
+        
+        // Update displays
+        function updateDisplays() {
+            const seconds = Math.floor(gameState.currentTime / 1000);
+            timeDisplay.textContent = `${seconds}s`;
+            
+            rectanglesLeftDisplay.textContent = gameState.rectanglesLeft;
+            
+            player1ScoreDisplay.textContent = gameState.playerScores.player1;
+            player2ScoreDisplay.textContent = gameState.playerScores.player2;
+        }
+        
+        // End the game
+        function endGame(isWin) {
+            gameState.isRunning = false;
+            
+            if (gameState.duplicatorInterval) {
+                clearInterval(gameState.duplicatorInterval);
+                gameState.duplicatorInterval = null;
+            }
+            
+            if (isWin) {
+                messageTitle.textContent = "Victory!";
+                messageText.textContent = `All rectangles destroyed in ${Math.floor(gameState.currentTime / 1000)} seconds!`;
+            } else {
+                messageTitle.textContent = "Game Over";
+                messageText.textContent = "All balls have been lost!";
+            }
+            
+            gameMessage.style.display = 'block';
+            
+            startBtn.disabled = false;
+        }
+        
+        // Reset the game
+        function resetGame() {
+            initGame();
+            
+            gameState.selectedBallTypes = { player1: [], player2: [] };
+            gameState.currentPlayerSelecting = 1;
+            
+            updateBallPreviews();
+            
+            ballTypeElements.forEach(el => {
+                el.classList.remove('selected');
+                el.style.pointerEvents = 'auto';
+                el.style.opacity = '1';
+            });
+            
+            startBtn.disabled = false;
+            assignBtn.disabled = false;
+        }
+        
+        // Event Listeners
+        
+        // Ball type selection
+        ballTypeElements.forEach(el => {
+            el.addEventListener('click', function() {
+                const type = this.dataset.type;
+                const player = `player${gameState.currentPlayerSelecting}`;
+                
+                // Check if already selected
+                const index = gameState.selectedBallTypes[player].indexOf(type);
+                
+                if (index > -1) {
+                    // Remove selection
+                    this.classList.remove('selected');
+                    gameState.selectedBallTypes[player].splice(index, 1);
+                } else {
+                    // Add selection
+                    if (gameState.selectedBallTypes[player].length >= 5) {
+                        alert(`Player ${gameState.currentPlayerSelecting} already has 5 ball types selected!`);
+                        return;
+                    }
+                    
+                    this.classList.add('selected');
+                    gameState.selectedBallTypes[player].push(type);
+                }
+                
+                updateBallPreviews();
+            });
+        });
+        
+        // Assign button
+        assignBtn.addEventListener('click', function() {
+            gameState.currentPlayerSelecting = gameState.currentPlayerSelecting === 1 ? 2 : 1;
+            this.textContent = `Assign to Player ${gameState.currentPlayerSelecting}`;
+            
+            // Update selection UI
+            ballTypeElements.forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Show current player's selections
+            const currentTypes = gameState.selectedBallTypes[`player${gameState.currentPlayerSelecting}`];
+            ballTypeElements.forEach(el => {
+                if (currentTypes.includes(el.dataset.type)) {
+                    el.classList.add('selected');
+                }
+            });
+        });
+        
+        // Start button
+        startBtn.addEventListener('click', startGame);
+        
+        // Reset button
+        resetBtn.addEventListener('click', resetGame);
+        
+        // Play again button
+        playAgainBtn.addEventListener('click', function() {
+            gameMessage.style.display = 'none';
+            resetGame();
+        });
+        
+        // Initialize
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

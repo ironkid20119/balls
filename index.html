@@ -3,1150 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ball Destruction Game</title>
+    <title>VS. Balls</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
         body {
-            background-color: #1a1a2e;
-            color: #e6e6e6;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .container {
-            max-width: 1200px;
-            width: 100%;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #00adb5;
-        }
-        
-        h1 {
-            color: #00adb5;
-            font-size: 2.8rem;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 5px rgba(0, 173, 181, 0.3);
-        }
-        
-        .subtitle {
-            color: #eeeeee;
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .game-layout {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        
-        .game-area {
-            flex: 1;
-            min-width: 480px;
-        }
-        
-        .square {
-            width: 100%;
-            height: 400px;
-            border: 3px solid #00adb5;
-            border-radius: 8px;
-            background-color: #162447;
-            position: relative;
+            margin: 0;
             overflow: hidden;
-            margin-bottom: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        }
-        
-        .ball {
-            position: absolute;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .rectangle {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: #0f172a;
             color: white;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            user-select: none;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+        }
+        .stats-card {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(8px);
+            border-left: 4px solid;
+            min-width: 140px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        #stats-panel::-webkit-scrollbar {
+            height: 4px;
+        }
+        #stats-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        #flashbang {
+            position: fixed;
+            top: 0;
             left: 0;
             width: 100%;
-        }
-        
-        .controls-panel {
-            flex: 1;
-            min-width: 300px;
-            background-color: #222831;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        }
-        
-        .section-title {
-            color: #00adb5;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #393e46;
-        }
-        
-        .ball-selection {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        
-        .ball-type {
-            background-color: #393e46;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-        
-        .ball-type:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        .ball-type.selected {
-            border-color: #00adb5;
-            background-color: #2d4059;
-        }
-        
-        .ball-type h4 {
-            color: #00adb5;
-            margin-bottom: 5px;
-        }
-        
-        .ball-type p {
-            font-size: 0.85rem;
-            color: #b8b8b8;
-        }
-        
-        .ball-assignment {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            gap: 20px;
-        }
-        
-        .player-ball {
-            text-align: center;
-            flex: 1;
-        }
-        
-        .ball-preview {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin: 10px auto;
-            border: 2px solid #00adb5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            background-color: #2d4059;
-        }
-        
-        .game-controls {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        
-        button {
-            background-color: #00adb5;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        button:hover {
-            background-color: #00969c;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        button:disabled {
-            background-color: #393e46;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .stats-panel {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            background-color: #222831;
-            padding: 15px;
-            border-radius: 10px;
-        }
-        
-        .stat {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #00adb5;
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #b8b8b8;
-        }
-        
-        .instructions {
-            background-color: #222831;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 25px;
-        }
-        
-        .instructions h3 {
-            color: #00adb5;
-            margin-bottom: 10px;
-        }
-        
-        .instructions ul {
-            padding-left: 20px;
-            margin-bottom: 15px;
-        }
-        
-        .instructions li {
-            margin-bottom: 8px;
-        }
-        
-        .game-message {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(34, 40, 49, 0.95);
-            padding: 30px 50px;
-            border-radius: 10px;
-            text-align: center;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
             z-index: 100;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            border: 3px solid #00adb5;
-            display: none;
         }
-        
-        .game-message h2 {
-            color: #00adb5;
-            margin-bottom: 15px;
-            font-size: 2.2rem;
+        .menu-hidden {
+            display: none !important;
         }
-        
-        .game-message p {
-            margin-bottom: 20px;
-            font-size: 1.2rem;
+        .spawn-scroll::-webkit-scrollbar {
+            width: 4px;
         }
-        
-        .ball-type-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        
-        .slammer-color { background-color: #ff5722; }
-        .duplicator-color { background-color: #9c27b0; }
-        .speedy-color { background-color: #4caf50; }
-        .growth-color { background-color: #2196f3; }
-        .infinity-color { background-color: #ffeb3b; }
-        .gravitron-color { background-color: #ff4081; }
-        
-        @media (max-width: 1000px) {
-            .game-layout {
-                flex-direction: column;
-            }
-            
-            .game-area {
-                min-width: 100%;
-            }
-            
-            .ball-selection {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        @media (max-width: 600px) {
-            .ball-selection {
-                grid-template-columns: 1fr;
-            }
+        .spawn-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Ball Destruction Game</h1>
-            <p class="subtitle">Choose ball types for 2 balls, each in their own square. Destroy all rectangles to win!</p>
-        </header>
-        
-        <div class="game-layout">
-            <div class="game-area">
-                <h3 class="section-title">Player 1 Square</h3>
-                <div id="square1" class="square">
-                    <!-- Ball and rectangles will be generated here -->
-                </div>
-                
-                <h3 class="section-title">Player 2 Square</h3>
-                <div id="square2" class="square">
-                    <!-- Ball and rectangles will be generated here -->
-                </div>
-            </div>
-            
-            <div class="controls-panel">
-                <h3 class="section-title">Ball Type Selection</h3>
-                <p>Select ball types for each player (you can combine types)</p>
-                
-                <div class="ball-selection">
-                    <div class="ball-type" data-type="slammer">
-                        <h4><span class="ball-type-indicator slammer-color"></span> Slammer</h4>
-                        <p>Gains +1 damage per bounce</p>
-                    </div>
-                    
-                    <div class="ball-type" data-type="duplicator">
-                        <h4><span class="ball-type-indicator duplicator-color"></span> Duplicator</h4>
-                        <p>Multiplies itself x2 every 2.5 seconds</p>
-                    </div>
-                    
-                    <div class="ball-type" data-type="speedy">
-                        <h4><span class="ball-type-indicator speedy-color"></span> Speedy</h4>
-                        <p>Gains +5 max speed per hit (starts at 180px/s)</p>
-                    </div>
-                    
-                    <div class="ball-type" data-type="growth">
-                        <h4><span class="ball-type-indicator growth-color"></span> Growth</h4>
-                        <p>Grows by +2.5 pixels per HIT (not bounce)</p>
-                    </div>
-                    
-                    <div class="ball-type" data-type="infinity">
-                        <h4><span class="ball-type-indicator infinity-color"></span> Infinity</h4>
-                        <p>Does 100% HP damage but moves at 120px/s</p>
-                    </div>
-                    
-                    <div class="ball-type" data-type="gravitron">
-                        <h4><span class="ball-type-indicator gravitron-color"></span> Gravitron</h4>
-                        <p>Becomes 10% heavier per bounce on rectangle</p>
-                    </div>
-                </div>
-                
-                <div class="ball-assignment">
-                    <div class="player-ball">
-                        <h4>Player 1 Ball</h4>
-                        <div id="preview1" class="ball-preview">P1</div>
-                        <div id="types1" class="ball-types-list">No types selected</div>
-                    </div>
-                    
-                    <div class="player-ball">
-                        <h4>Player 2 Ball</h4>
-                        <div id="preview2" class="ball-preview">P2</div>
-                        <div id="types2" class="ball-types-list">No types selected</div>
-                    </div>
-                </div>
-                
-                <div class="game-controls">
-                    <button id="assignBtn">Assign to Player 1</button>
-                    <button id="startBtn">Start Game</button>
-                    <button id="resetBtn">Reset Game</button>
-                </div>
-                
-                <div class="stats-panel">
-                    <div class="stat">
-                        <div class="stat-value" id="time">0s</div>
-                        <div class="stat-label">Time</div>
-                    </div>
-                    
-                    <div class="stat">
-                        <div class="stat-value" id="rectangles-left">6</div>
-                        <div class="stat-label">Rectangles Left</div>
-                    </div>
-                    
-                    <div class="stat">
-                        <div class="stat-value" id="total-balls">2</div>
-                        <div class="stat-label">Total Balls</div>
-                    </div>
-                    
-                    <div class="stat">
-                        <div class="stat-value" id="player1-score">0</div>
-                        <div class="stat-label">Player 1 Score</div>
-                    </div>
-                    
-                    <div class="stat">
-                        <div class="stat-value" id="player2-score">0</div>
-                        <div class="stat-label">Player 2 Score</div>
-                    </div>
-                </div>
-            </div>
+
+    <div id="flashbang"></div>
+
+    <!-- Main Control Bar -->
+    <div class="fixed top-4 left-4 z-50 flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold lowercase text-slate-500">vs. balls</h1>
+            <button id="spawn-toggle-btn" onclick="toggleMenu()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold shadow-lg transition lowercase">
+                spawn
+            </button>
+            <button onclick="clearArena()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs transition shadow-lg lowercase">
+                clear
+            </button>
         </div>
         
-        <div class="instructions">
-            <h3>How to Play</h3>
-            <ul>
-                <li>Select ball types from the panel (click to select/deselect)</li>
-                <li>Click "Assign to Player 1" to switch between players when assigning ball types</li>
-                <li>Click "Start Game" to begin</li>
-                <li>Balls will be affected by gravity and bounce around their squares</li>
-                <li>Each rectangle has different HP: Rectangle 1 (100 HP), Rectangle 2 (250 HP), Rectangle 3 (500 HP)</li>
-                <li>Rectangles are stacked from smallest to biggest at the bottom of each square</li>
-                <li>Destroy all rectangles to win!</li>
-                <li>Ball types can be combined for more powerful effects</li>
-            </ul>
-            <p><strong>Fixed:</strong> Growth now only grows on HIT (not bounce) and stops growing after hitting. Rectangles are now in correct order!</p>
-        </div>
-        
-        <div id="gameMessage" class="game-message">
-            <h2 id="messageTitle">Game Over</h2>
-            <p id="messageText"></p>
-            <button id="playAgainBtn">Play Again</button>
+        <!-- Collapsible Spawn Menu -->
+        <div id="spawn-menu" class="menu-hidden bg-slate-900/95 backdrop-blur-md p-3 rounded-xl border border-slate-700 shadow-2xl flex flex-col gap-3 w-48">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                <label class="text-[10px] lowercase text-slate-400 font-bold">hp:</label>
+                <input type="number" id="default-hp" value="100" class="w-16 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 outline-none text-blue-400 text-right text-xs">
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1 spawn-scroll">
+                <button onclick="spawnBall('sword')" class="px-2 py-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-500/40 rounded text-[10px] transition lowercase">sword</button>
+                <button onclick="spawnBall('laser')" class="px-2 py-2 bg-red-600/20 border border-red-500/30 hover:bg-red-500/40 rounded text-[10px] transition lowercase">laser</button>
+                <button onclick="spawnBall('unarmed')" class="px-2 py-2 bg-green-600/20 border border-green-500/30 hover:bg-green-500/40 rounded text-[10px] transition lowercase">unarmed</button>
+                <button onclick="spawnBall('dark magician')" class="px-2 py-2 bg-purple-600/20 border border-purple-500/30 hover:bg-purple-500/40 rounded text-[10px] transition lowercase">mage</button>
+                <button onclick="spawnBall('randomizer')" class="px-2 py-2 bg-cyan-600/20 border border-cyan-500/30 hover:bg-cyan-500/40 rounded text-[10px] transition lowercase">random</button>
+                <button onclick="spawnBall('dagger')" class="px-2 py-2 bg-yellow-600/20 border border-yellow-500/30 hover:bg-yellow-500/40 rounded text-[10px] transition lowercase">dagger</button>
+                <button onclick="spawnBall('heartstealer')" class="px-2 py-2 bg-pink-500/20 border border-pink-500/30 hover:bg-pink-500/40 rounded text-[10px] transition lowercase">heart</button>
+                <button onclick="spawnBall('eggthrower')" class="px-2 py-2 bg-yellow-100/20 border border-yellow-200/30 hover:bg-yellow-100/40 rounded text-[10px] transition lowercase text-yellow-200">egg</button>
+                <button onclick="spawnBall('black hole')" class="px-2 py-2 bg-indigo-950/40 border border-indigo-400/30 hover:bg-indigo-900/60 rounded text-[10px] transition lowercase">void</button>
+                <button onclick="spawnBall('zen')" class="px-2 py-2 bg-zinc-900/40 border border-zinc-700 hover:bg-zinc-800 rounded text-[10px] transition lowercase">zen</button>
+                <button onclick="spawnBall('slammer')" class="px-2 py-2 bg-orange-600/20 border border-orange-500/30 hover:bg-orange-500/40 rounded text-[10px] transition lowercase">slam</button>
+                <button onclick="spawnBall('nuke')" class="px-2 py-2 bg-white text-black hover:bg-slate-200 rounded text-[10px] font-bold transition lowercase">nuke</button>
+            </div>
         </div>
     </div>
 
+    <!-- Stats Panel -->
+    <div id="stats-panel" class="fixed bottom-0 left-0 right-0 z-50 flex gap-2 p-4 overflow-x-auto whitespace-nowrap bg-slate-900/80 backdrop-blur-md border-t border-slate-700 pointer-events-auto min-h-[100px]">
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
     <script>
-        // Game variables
-        let gameState = {
-            isRunning: false,
-            startTime: 0,
-            currentTime: 0,
-            rectanglesLeft: 6,
-            selectedBallTypes: { player1: [], player2: [] },
-            currentPlayerSelecting: 1,
-            balls: [],
-            rectangles: [],
-            playerScores: { player1: 0, player2: 0 },
-            duplicatorInterval: null,
-            lastFrameTime: 0
-        };
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const statsPanel = document.getElementById('stats-panel');
+        const flashbang = document.getElementById('flashbang');
+        const hpInput = document.getElementById('default-hp');
+        const spawnMenu = document.getElementById('spawn-menu');
+
+        let width, height;
+        let balls = [];
+        let particles = [];
+        let lasers = [];
+        let pools = []; // For yolk pools
         
-        // Ball type properties
-        const ballTypes = {
-            slammer: {
-                name: "Slammer",
-                color: "#ff5722",
-                description: "Gains +1 damage per bounce",
-                damagePerBounce: 1
-            },
-            duplicator: {
-                name: "Duplicator",
-                color: "#9c27b0",
-                description: "Multiplies itself x2 per 15 seconds"
-            },
-            speedy: {
-                name: "Speedy",
-                color: "#4caf50",
-                description: "Gains +5 max speed per hit",
-                speedIncrease: 5,
-                baseMaxSpeed: 180
-            },
-            growth: {
-                name: "Growth",
-                color: "#2196f3",
-                description: "Grows by +2.5 pixels per HIT",
-                growthPerHit: 2.5
-            },
-            infinity: {
-                name: "Infinity",
-                color: "#ffeb3b",
-                description: "Does 100% HP damage but moves at 120px/s",
-                baseSpeed: 120
-            },
-            gravitron: {
-                name: "Gravitron",
-                color: "#ff4081",
-                description: "Becomes 10% heavier per bounce on rectangle",
-                gravityIncrease: 0.1
-            }
-        };
-        
-        // Physics constants
-        const GRAVITY = 0.3;
-        const BOUNCE_DAMPENING = 0.85;
-        const DEFAULT_MAX_SPEED = 180;
-        
-        // DOM elements
-        const square1 = document.getElementById('square1');
-        const square2 = document.getElementById('square2');
-        const ballTypeElements = document.querySelectorAll('.ball-type');
-        const preview1 = document.getElementById('preview1');
-        const preview2 = document.getElementById('preview2');
-        const types1 = document.getElementById('types1');
-        const types2 = document.getElementById('types2');
-        const assignBtn = document.getElementById('assignBtn');
-        const startBtn = document.getElementById('startBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const gameMessage = document.getElementById('gameMessage');
-        const messageTitle = document.getElementById('messageTitle');
-        const messageText = document.getElementById('messageText');
-        const playAgainBtn = document.getElementById('playAgainBtn');
-        
-        // Stats display
-        const timeDisplay = document.getElementById('time');
-        const rectanglesLeftDisplay = document.getElementById('rectangles-left');
-        const totalBallsDisplay = document.getElementById('total-balls');
-        const player1ScoreDisplay = document.getElementById('player1-score');
-        const player2ScoreDisplay = document.getElementById('player2-score');
-        
-        // Initialize the game
-        function initGame() {
-            // Clear any existing game elements
-            square1.innerHTML = '';
-            square2.innerHTML = '';
-            gameState.balls = [];
-            gameState.rectangles = [];
-            gameState.isRunning = false;
-            gameState.rectanglesLeft = 6;
-            gameState.playerScores = { player1: 0, player2: 0 };
-            gameState.currentTime = 0;
-            gameState.lastFrameTime = 0;
-            
-            // Clear duplicator interval if it exists
-            if (gameState.duplicatorInterval) {
-                clearInterval(gameState.duplicatorInterval);
-                gameState.duplicatorInterval = null;
-            }
-            
-            // Update displays
-            updateDisplays();
-            
-            // Hide game message
-            gameMessage.style.display = 'none';
-            
-            // Create rectangles for each square - FIXED ORDER: smallest on top, biggest on bottom
-            createRectangles(square1, 1);
-            createRectangles(square2, 2);
-            
-            // Update ball previews
-            updateBallPreviews();
-        }
-        
-        // Create rectangles for a square - FIXED: smallest on top, biggest on bottom
-        function createRectangles(square, player) {
-            const rectData = [
-                { hp: 100, height: 40, color: "#ff5252" },
-                { hp: 250, height: 50, color: "#ff9800" },
-                { hp: 500, height: 60, color: "#ff4081" }
-            ];
-            
-            let bottomPosition = 0;
-            
-            // Create from smallest (100 HP) at bottom to biggest (500 HP) on top? Wait...
-            // Actually, you said "smallest in hp on top, and lowest HP on bottom"
-            // That's contradictory - "smallest HP" and "lowest HP" mean the same thing.
-            // I think you mean: smallest HP on top, largest HP on bottom.
-            // So 100 HP on top, then 250, then 500 at the bottom.
-            
-            // But wait, if we're stacking from the bottom up, we need to put 500 at the very bottom
-            // then 250 on top of it, then 100 on top of that.
-            // Actually, you want them stacked at the bottom of the square, so:
-            // 500 HP (largest) should be at the very bottom
-            // 250 HP should be above 500
-            // 100 HP (smallest) should be at the very top (closest to the balls)
-            
-            // Let me re-read: "smallest in hp on top, and lowest HP on bottom"
-            // I think there's a typo. I'll assume you want: smallest HP (100) on top, largest HP (500) on bottom.
-            
-            // So we need to create in reverse order: 500 first (at bottom), then 250, then 100 (on top)
-            for (let i = 2; i >= 0; i--) {
-                const rect = document.createElement('div');
-                rect.className = 'rectangle';
-                rect.dataset.hp = rectData[i].hp;
-                rect.dataset.maxHp = rectData[i].hp;
-                rect.dataset.player = player;
-                
-                // Position rectangles at the bottom, stacked
-                rect.style.height = `${rectData[i].height}px`;
-                rect.style.backgroundColor = rectData[i].color;
-                rect.style.bottom = `${bottomPosition}px`;
-                
-                rect.textContent = `HP: ${rectData[i].hp}`;
-                
-                square.appendChild(rect);
-                gameState.rectangles.push({
-                    element: rect,
-                    player: player,
-                    hp: rectData[i].hp,
-                    maxHp: rectData[i].hp,
-                    height: rectData[i].height,
-                    top: square.offsetHeight - bottomPosition - rectData[i].height,
-                    bottom: bottomPosition + rectData[i].height,
-                    originalHeight: rectData[i].height
-                });
-                
-                bottomPosition += rectData[i].height;
-            }
-        }
-        
-        // Update ball preview displays with multiple colors
-        function updateBallPreviews() {
-            // Player 1 preview
-            if (gameState.selectedBallTypes.player1.length > 0) {
-                preview1.textContent = "P1";
-                let typesText = "";
-                gameState.selectedBallTypes.player1.forEach(type => {
-                    typesText += ballTypes[type].name + ", ";
-                });
-                types1.textContent = typesText.slice(0, -2);
-                
-                // Set preview with multiple colors
-                setElementGradient(preview1, gameState.selectedBallTypes.player1);
+        const BASE_DRAG = 0.999; 
+        const BOUNCE = 1.0; 
+        const COLLISION_BOOST = 1.05; 
+        const BALL_RADIUS = 22;
+        const STATS_HEIGHT = 100;
+
+        const MIN_SPEED = 2;
+        const MAX_SPEED = 30;
+
+        const TYPES = ['sword', 'laser', 'unarmed', 'dark magician', 'dagger', 'heartstealer', 'slammer', 'eggthrower'];
+
+        function toggleMenu() {
+            const isHidden = spawnMenu.classList.contains('menu-hidden');
+            const btn = document.getElementById('spawn-toggle-btn');
+            if (isHidden) {
+                spawnMenu.classList.remove('menu-hidden');
+                btn.style.backgroundColor = '#475569';
             } else {
-                preview1.textContent = "P1";
-                preview1.style.background = "#2d4059";
-                types1.textContent = "No types selected";
+                spawnMenu.classList.add('menu-hidden');
+                btn.style.backgroundColor = '#2563eb';
             }
-            
-            // Player 2 preview
-            if (gameState.selectedBallTypes.player2.length > 0) {
-                preview2.textContent = "P2";
-                let typesText = "";
-                gameState.selectedBallTypes.player2.forEach(type => {
-                    typesText += ballTypes[type].name + ", ";
+        }
+
+        class Ball {
+            constructor(x, y, type, isClone = false, cloneHp = 100, lifeSpan = -1, creatorId = null) {
+                this.id = Math.random().toString(36).substr(2, 5);
+                this.creatorId = creatorId;
+                this.x = x;
+                this.y = y;
+                
+                const speedScale = (type === 'black hole') ? 0.5 : 10;
+                this.vx = (Math.random() - 0.5) * speedScale;
+                this.vy = (Math.random() - 0.5) * speedScale;
+                
+                this.type = type;
+                this.isClone = isClone; 
+                this.radius = BALL_RADIUS;
+                this.lifeSpan = lifeSpan; 
+                
+                const startHp = isClone ? cloneHp : parseInt(hpInput.value) || 100;
+                this.hp = startHp;
+                this.maxHp = startHp;
+                
+                this.color = this.getColor();
+                this.hitCooldown = 0;
+                this.stunTimer = 0;
+                
+                this.setupType();
+            }
+
+            getColor() {
+                switch(this.type) {
+                    case 'sword': return '#3b82f6';
+                    case 'laser': return '#ef4444';
+                    case 'unarmed': return '#22c55e';
+                    case 'dark magician': return '#a855f7';
+                    case 'dagger': return '#eab308';
+                    case 'heartstealer': return '#ec4899';
+                    case 'eggthrower': return '#fef3c7';
+                    case 'black hole': return '#000000';
+                    case 'zen': return '#000000';
+                    case 'slammer': return '#ea580c';
+                    case 'nuke': return '#ffffff';
+                    case 'randomizer': return '#06b6d4';
+                    default: return '#ffffff';
+                }
+            }
+
+            setupType() {
+                switch(this.type) {
+                    case 'sword': this.swordDmg = 5; this.swordAngle = 0; break;
+                    case 'laser': this.laserTimer = 0; this.laserCooldown = 1000; break;
+                    case 'unarmed': this.unarmedMaxSpeed = 8; break;
+                    case 'dark magician': this.bookAngle = 0; this.nextCloneHp = 10; break;
+                    case 'dagger': this.swingSpeed = 1.5; this.swingAngle = 0; this.daggerDmg = 1; break;
+                    case 'heartstealer': this.wandDmg = 1; this.wandAngle = 0; break;
+                    case 'eggthrower': 
+                        this.eggAngle = 0; 
+                        this.eggDmg = 3; 
+                        this.isEggThrown = false; 
+                        this.eggReturnTimer = 0;
+                        this.eggCooldown = 0; // New cooldown timer
+                        this.eggX = 0;
+                        this.eggY = 0;
+                        this.totalDamageAdded = 0;
+                        break;
+                    case 'black hole': this.fixedSpeed = 0.4; break;
+                    case 'slammer': this.slamHits = 0; this.slamTimer = 0; this.isSlamming = false; break;
+                    case 'nuke': this.nukeTimer = 20; this.isCharging = false; this.chargeTimer = 2.5; break;
+                    case 'randomizer': 
+                        this.spawnTimer = 2.5; 
+                        this.baseSpawnTime = 2.5;
+                        break;
+                }
+            }
+
+            update() {
+                if (this.stunTimer > 0) {
+                    this.stunTimer -= 0.0166;
+                    this.vx *= 0.9;
+                    this.vy *= 0.9;
+                }
+
+                if (this.lifeSpan > 0) {
+                    this.lifeSpan -= 0.0166;
+                    if (this.lifeSpan <= 0) this.hp = 0;
+                }
+
+                if (this.type === 'black hole') {
+                    const angle = Math.atan2(this.vy, this.vx);
+                    this.vx = Math.cos(angle) * this.fixedSpeed;
+                    this.vy = Math.sin(angle) * this.fixedSpeed;
+                    
+                    balls.forEach(other => {
+                        if (other === this) return;
+                        const dx = this.x - other.x;
+                        const dy = this.y - other.y;
+                        const dist = Math.hypot(dx, dy);
+                        const horizon = 250;
+                        if (dist < horizon && dist > 1) {
+                            const normalized = (horizon - dist) / horizon;
+                            const force = Math.pow(normalized, 3) * 1.5; 
+                            other.vx += (dx / dist) * force;
+                            other.vy += (dy / dist) * force;
+                        }
+                    });
+                } else {
+                    let speed = Math.hypot(this.vx, this.vy);
+                    const dragFactor = BASE_DRAG - (Math.pow(speed / MAX_SPEED, 2) * 0.05);
+                    this.vx *= dragFactor;
+                    this.vy *= dragFactor;
+                }
+                
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.type !== 'black hole') {
+                    let speed = Math.hypot(this.vx, this.vy);
+                    if (speed > MAX_SPEED) {
+                        this.vx = (this.vx / speed) * MAX_SPEED;
+                        this.vy = (this.vy / speed) * MAX_SPEED;
+                    } else if (speed < MIN_SPEED && speed > 0) {
+                        this.vx = (this.vx / speed) * MIN_SPEED;
+                        this.vy = (this.vy / speed) * MIN_SPEED;
+                    }
+                }
+
+                if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -BOUNCE; }
+                if (this.x + this.radius > width) { this.x = width - this.radius; this.vx *= -BOUNCE; }
+                if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -BOUNCE; }
+                
+                const playHeight = height - STATS_HEIGHT;
+                if (this.y + this.radius > playHeight) {
+                    this.y = playHeight - this.radius;
+                    this.vy *= -BOUNCE;
+                }
+
+                // Check pools
+                pools.forEach(pool => {
+                    if (Math.hypot(this.x - pool.x, this.y - pool.y) < this.radius + pool.r) {
+                        this.stunTimer = 0.5;
+                    }
                 });
-                types2.textContent = typesText.slice(0, -2);
-                
-                // Set preview with multiple colors
-                setElementGradient(preview2, gameState.selectedBallTypes.player2);
-            } else {
-                preview2.textContent = "P2";
-                preview2.style.background = "#2d4059";
-                types2.textContent = "No types selected";
-            }
-            
-            // Update assign button text
-            assignBtn.textContent = `Assign to Player ${gameState.currentPlayerSelecting}`;
-        }
-        
-        // Set element gradient for multiple types
-        function setElementGradient(element, types) {
-            if (types.length === 0) {
-                element.style.background = "#2d4059";
-                return;
-            }
-            
-            if (types.length === 1) {
-                element.style.background = ballTypes[types[0]].color;
-                return;
-            }
-            
-            // For multiple types, create a gradient
-            const colors = types.map(type => ballTypes[type].color);
-            if (colors.length === 2) {
-                element.style.background = `linear-gradient(90deg, ${colors[0]} 50%, ${colors[1]} 50%)`;
-            } else if (colors.length === 3) {
-                element.style.background = `linear-gradient(90deg, ${colors[0]} 33%, ${colors[1]} 33% 66%, ${colors[2]} 66%)`;
-            } else if (colors.length === 4) {
-                element.style.background = `linear-gradient(90deg, ${colors[0]} 25%, ${colors[1]} 25% 50%, ${colors[2]} 50% 75%, ${colors[3]} 75%)`;
-            } else if (colors.length === 5) {
-                element.style.background = `linear-gradient(90deg, ${colors[0]} 20%, ${colors[1]} 20% 40%, ${colors[2]} 40% 60%, ${colors[3]} 60% 80%, ${colors[4]} 80%)`;
-            }
-        }
-        
-        // Create balls based on selected types
-        function createBalls() {
-            // Clear existing balls
-            gameState.balls = [];
-            
-            // Create player 1 ball
-            if (gameState.selectedBallTypes.player1.length > 0) {
-                createBall(square1, 1, gameState.selectedBallTypes.player1);
-            }
-            
-            // Create player 2 ball
-            if (gameState.selectedBallTypes.player2.length > 0) {
-                createBall(square2, 2, gameState.selectedBallTypes.player2);
-            }
-            
-            // Update total balls display
-            totalBallsDisplay.textContent = gameState.balls.length;
-        }
-        
-        // Create a single ball
-        function createBall(square, player, types) {
-            const ball = document.createElement('div');
-            ball.className = 'ball';
-            
-            // Set ball size
-            let size = 20;
-            
-            // Set ball color based on types
-            setElementGradient(ball, types);
-            
-            ball.style.width = `${size}px`;
-            ball.style.height = `${size}px`;
-            
-            // Start position (center of square)
-            const startX = square.offsetWidth / 2;
-            const startY = square.offsetHeight / 3;
-            
-            ball.style.left = `${startX}px`;
-            ball.style.top = `${startY}px`;
-            
-            square.appendChild(ball);
-            
-            // Determine base speed based on types
-            let baseSpeed = DEFAULT_MAX_SPEED;
-            if (types.includes("infinity")) {
-                baseSpeed = ballTypes.infinity.baseSpeed;
-            }
-            
-            if (types.includes("speedy")) {
-                baseSpeed = ballTypes.speedy.baseMaxSpeed;
-            }
-            
-            // Give initial random velocity
-            const angle = Math.random() * Math.PI * 2;
-            const speed = baseSpeed * 0.7;
-            const vx = Math.cos(angle) * speed;
-            const vy = Math.sin(angle) * speed;
-            
-            // Create ball object
-            const ballObj = {
-                element: ball,
-                player: player,
-                x: startX,
-                y: startY,
-                vx: vx,
-                vy: vy,
-                radius: size / 2,
-                types: [...types],
-                damage: 1, // Default damage is 1
-                bounceCount: 0,
-                hitCount: 0,
-                maxSpeed: baseSpeed,
-                squareWidth: square.offsetWidth,
-                squareHeight: square.offsetHeight,
-                createdAt: Date.now(),
-                isActive: true,
-                gravityMultiplier: 1,
-                lastHitTime: 0 // To prevent multiple hits in quick succession
-            };
-            
-            gameState.balls.push(ballObj);
-            return ballObj;
-        }
-        
-        // Start the game
-        function startGame() {
-            if (gameState.selectedBallTypes.player1.length === 0 && 
-                gameState.selectedBallTypes.player2.length === 0) {
-                alert("Please select at least one ball type for one of the players!");
-                return;
-            }
-            
-            initGame();
-            createBalls();
-            
-            gameState.isRunning = true;
-            gameState.startTime = Date.now();
-            gameState.lastFrameTime = Date.now();
-            
-            // Start game loop
-            gameLoop();
-            
-            // Start duplicator interval
-            gameState.duplicatorInterval = setInterval(duplicateBalls, 2500);
-            
-            // Update button states
-            startBtn.disabled = true;
-            assignBtn.disabled = true;
-            
-            // Disable ball type selection
-            ballTypeElements.forEach(el => {
-                el.style.pointerEvents = 'none';
-                el.style.opacity = '0.7';
-            });
-        }
-        
-        // Game loop
-        function gameLoop() {
-            if (!gameState.isRunning) return;
-            
-            // Calculate time delta
-            const currentTime = Date.now();
-            const deltaTime = Math.min((currentTime - gameState.lastFrameTime) / 1000, 0.033); // Cap at 30fps
-            gameState.lastFrameTime = currentTime;
-            
-            // Calculate elapsed time
-            gameState.currentTime = currentTime - gameState.startTime;
-            
-            // Update balls
-            updateBalls(deltaTime);
-            
-            // Check for collisions
-            checkCollisions();
-            
-            // Check win condition - FIXED
-            if (gameState.rectanglesLeft <= 0) {
-                endGame(true);
-                return;
-            }
-            
-            // Update displays
-            updateDisplays();
-            
-            // Continue game loop
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // Update all balls
-        function updateBalls(deltaTime) {
-            gameState.balls.forEach(ball => {
-                if (!ball.isActive) return;
-                
-                // Apply gravity with gravitron multiplier
-                const gravity = GRAVITY * ball.gravityMultiplier;
-                ball.vy += gravity * 60 * deltaTime;
-                
-                // Update position
-                ball.x += ball.vx * deltaTime;
-                ball.y += ball.vy * deltaTime;
-                
-                // Check for collisions with walls
-                if (ball.x - ball.radius <= 0) {
-                    ball.x = ball.radius;
-                    ball.vx = Math.abs(ball.vx) * BOUNCE_DAMPENING;
-                    handleBounce(ball, false);
+
+                // Unique logic
+                if (this.type === 'sword') this.swordAngle += 0.1;
+                if (this.type === 'dagger') this.swingAngle += 0.1 * this.swingSpeed;
+                if (this.type === 'heartstealer') this.wandAngle += 0.12;
+                if (this.type === 'dark magician') this.bookAngle += 0.05;
+                if (this.type === 'eggthrower') {
+                    if (this.eggCooldown > 0) this.eggCooldown -= 0.0166;
+
+                    if (!this.isEggThrown) {
+                        this.eggAngle += 0.15;
+                        this.eggX = this.x + Math.cos(this.eggAngle) * 40;
+                        this.eggY = this.y + Math.sin(this.eggAngle) * 40;
+                        
+                        // Look for targets if cooldown is up
+                        if (this.eggCooldown <= 0) {
+                            let target = null;
+                            let minDist = 300;
+                            balls.forEach(b => {
+                                if (b === this || b.creatorId === this.id) return;
+                                let d = Math.hypot(this.x - b.x, this.y - b.y);
+                                if (d < minDist) { minDist = d; target = b; }
+                            });
+                            if (target) {
+                                this.isEggThrown = true;
+                                this.eggCooldown = 1.5; // Nerf: 1.5s cooldown
+                                
+                                // Accuracy nerf (65% accuracy)
+                                let accuracyOffset = (Math.random() > 0.65) ? (Math.random() - 0.5) * 1.5 : 0;
+                                let angleToTarget = Math.atan2(target.y - this.eggY, target.x - this.eggX) + accuracyOffset;
+                                let throwSpeed = 10;
+                                
+                                this.eggVX = Math.cos(angleToTarget) * throwSpeed;
+                                this.eggVY = Math.sin(angleToTarget) * throwSpeed;
+                            }
+                        }
+                    } else {
+                        this.eggX += this.eggVX;
+                        this.eggY += this.eggVY;
+                        this.eggReturnTimer++;
+
+                        // Check egg hit
+                        balls.forEach(b => {
+                            if (b === this || b.id === this.creatorId) return;
+                            if (Math.hypot(this.eggX - b.x, this.eggY - b.y) < b.radius + 8) {
+                                b.takeDamage(this.eggDmg, this);
+                                this.totalDamageAdded += 3;
+                                pools.push({ x: this.eggX, y: this.eggY, r: 40, life: 5 });
+                                this.resetEgg();
+                            }
+                        });
+
+                        if (this.eggReturnTimer > 60 || this.eggX < 0 || this.eggX > width || this.eggY < 0 || this.eggY > height - STATS_HEIGHT) {
+                            this.resetEgg();
+                        }
+                    }
                 }
-                
-                if (ball.x + ball.radius >= ball.squareWidth) {
-                    ball.x = ball.squareWidth - ball.radius;
-                    ball.vx = -Math.abs(ball.vx) * BOUNCE_DAMPENING;
-                    handleBounce(ball, false);
+                if (this.type === 'laser') {
+                    this.laserTimer += 16.6; 
+                    if (this.laserTimer >= this.laserCooldown) { this.shootLaser(); this.laserTimer = 0; }
                 }
-                
-                if (ball.y - ball.radius <= 0) {
-                    ball.y = ball.radius;
-                    ball.vy = Math.abs(ball.vy) * BOUNCE_DAMPENING;
-                    handleBounce(ball, false);
+                if (this.type === 'randomizer') {
+                    this.spawnTimer -= 0.0166;
+                    if (this.spawnTimer <= 0) {
+                        this.spawnTimer = this.baseSpawnTime;
+                        const randomType = TYPES[Math.floor(Math.random() * TYPES.length)];
+                        balls.push(new Ball(this.x, this.y, randomType, true, 50, 5, this.id));
+                    }
                 }
-                
-                if (ball.y + ball.radius >= ball.squareHeight) {
-                    ball.y = ball.squareHeight - ball.radius;
-                    ball.vy = -Math.abs(ball.vy) * BOUNCE_DAMPENING;
-                    handleBounce(ball, false);
+                if (this.type === 'nuke') {
+                    if (!this.isCharging) {
+                        this.nukeTimer -= 0.0166;
+                        if (this.nukeTimer <= 0) this.isCharging = true;
+                    } else {
+                        this.chargeTimer -= 0.0166;
+                        if (this.chargeTimer <= 0) triggerGlobalNuke(this);
+                    }
                 }
-                
-                // Apply speed limits
-                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                if (speed > ball.maxSpeed) {
-                    ball.vx = (ball.vx / speed) * ball.maxSpeed;
-                    ball.vy = (ball.vy / speed) * ball.maxSpeed;
-                }
-                
-                // Update ball element position
-                ball.element.style.left = `${ball.x}px`;
-                ball.element.style.top = `${ball.y}px`;
-            });
-        }
-        
-        // Handle bounce effects
-        function handleBounce(ball, isRectangleBounce) {
-            ball.bounceCount++;
-            
-            // Apply slammer effect
-            if (ball.types.includes("slammer")) {
-                ball.damage += ballTypes.slammer.damagePerBounce;
+
+                if (this.hitCooldown > 0) this.hitCooldown--;
             }
-            
-            // Apply gravitron effect (only on rectangle bounces)
-            if (ball.types.includes("gravitron") && isRectangleBounce) {
-                ball.gravityMultiplier *= (1 + ballTypes.gravitron.gravityIncrease);
+
+            resetEgg() {
+                this.isEggThrown = false;
+                this.eggReturnTimer = 0;
             }
-            
-            // NOTE: Growth is NOT applied here anymore - only in handleCollision
+
+            shootLaser() {
+                let nearest = null; let minDist = Infinity;
+                balls.forEach(b => {
+                    if (b === this || b.id === this.creatorId || b.creatorId === this.id) return;
+                    const d = Math.hypot(this.x - b.x, this.y - b.y);
+                    if (d < minDist) { minDist = d; nearest = b; }
+                });
+                if (nearest) {
+                    lasers.push({ x1: this.x, y1: this.y, x2: nearest.x, y2: nearest.y, life: 10 });
+                    nearest.takeDamage(3, this);
+                }
+            }
+
+            takeDamage(dmg, owner) {
+                if (this.type === 'zen') return; 
+                if (owner && (owner.id === this.creatorId || owner.creatorId === this.id)) return;
+
+                this.hp -= dmg;
+                createParticles(this.x, this.y, this.color);
+                
+                if (owner) {
+                    if (owner.type === 'sword') owner.swordDmg += 1;
+                    if (owner.type === 'laser') owner.laserCooldown = Math.max(50, owner.laserCooldown - 20);
+                    if (owner.type === 'dagger') owner.swingSpeed += 0.1;
+                    if (owner.type === 'dark magician') owner.nextCloneHp += 1;
+                    if (owner.type === 'heartstealer') { owner.wandDmg += 0.5; owner.hp += Math.min(dmg, 20); }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.type === 'black hole') {
+                    const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 45);
+                    grad.addColorStop(0, 'rgba(79, 70, 229, 0.7)');
+                    grad.addColorStop(0.4, 'rgba(0, 0, 0, 1)');
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI * 2); ctx.fill();
+                }
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                ctx.strokeStyle = this.isClone || this.lifeSpan > 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.8)';
+                ctx.lineWidth = this.isClone ? 1 : 3;
+                if(this.type === 'black hole') ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = (this.type === 'nuke' || this.type === 'randomizer' || this.type === 'eggthrower') ? 'black' : 'white';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let label = Math.ceil(this.hp);
+                if (this.type === 'nuke') label = this.isCharging ? "!!!" : Math.ceil(this.nukeTimer);
+                if (this.type === 'randomizer') label = "?";
+                if (this.type === 'black hole') label = "●";
+                if (this.type === 'eggthrower') label = "🍳";
+                ctx.fillText(label, 0, 0);
+
+                if (this.type === 'randomizer') {
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(0,0, this.radius + 3, 0, (this.spawnTimer/this.baseSpawnTime) * Math.PI * 2); ctx.stroke();
+                }
+                if (this.type === 'sword') {
+                    ctx.rotate(this.swordAngle);
+                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(25, -4, 25, 8);
+                }
+                if (this.type === 'dark magician') {
+                    ctx.rotate(this.bookAngle);
+                    ctx.fillStyle = '#fef3c7'; ctx.fillRect(25, -8, 16, 16);
+                    ctx.fillStyle = '#7e22ce'; ctx.fillRect(26, -6, 2, 12); 
+                }
+                if (this.type === 'heartstealer') {
+                    ctx.rotate(this.wandAngle);
+                    ctx.fillStyle = '#f9a8d4'; ctx.fillRect(25, -2, 18, 4);
+                    ctx.beginPath(); ctx.arc(43, 0, 5, 0, Math.PI*2); ctx.fillStyle = '#db2777'; ctx.fill();
+                }
+                if (this.type === 'dagger') {
+                    ctx.rotate(this.swingAngle);
+                    ctx.fillStyle = '#fde047'; ctx.fillRect(20, -2, 15, 4);
+                }
+                ctx.restore();
+
+                // Draw egg separately if exists
+                if (this.type === 'eggthrower') {
+                    ctx.save();
+                    ctx.translate(this.eggX, this.eggY);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 8, 10, 0, 0, Math.PI*2);
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            getPrimaryStat() {
+                switch(this.type) {
+                    case 'sword': return { label: 'dmg', val: this.swordDmg || 5 };
+                    case 'laser': return { label: 'rate', val: (1000/this.laserCooldown).toFixed(1) + '/s' };
+                    case 'unarmed': return { label: 'spd', val: Math.round(Math.hypot(this.vx, this.vy)) };
+                    case 'dark magician': return { label: 'next', val: this.nextCloneHp };
+                    case 'dagger': return { label: 'swng', val: (this.swingSpeed || 1.5).toFixed(1) };
+                    case 'heartstealer': return { label: 'pwr', val: (this.wandDmg || 1).toFixed(1) };
+                    case 'eggthrower': return { label: 'bonus', val: '+' + this.totalDamageAdded };
+                    case 'randomizer': return { label: 'rate', val: this.baseSpawnTime.toFixed(2) + 's' };
+                    case 'nuke': return { label: 'time', val: Math.ceil(this.nukeTimer) + 's' };
+                    case 'black hole': return { label: 'pull', val: '∞' };
+                    default: return { label: 'spd', val: Math.round(Math.hypot(this.vx, this.vy)) };
+                }
+            }
         }
-        
-        // Check for collisions
+
+        function triggerGlobalNuke(source) {
+            flashbang.style.transition = "none";
+            flashbang.style.opacity = "1";
+            setTimeout(() => { flashbang.style.transition = "opacity 3.5s ease-out"; flashbang.style.opacity = "0"; }, 50);
+            const currentBalls = [...balls];
+            currentBalls.forEach(b => b.takeDamage(b.maxHp * 10, source));
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 4; i++) {
+                particles.push({ x, y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6, life: 1, color });
+            }
+        }
+
+        function spawnBall(type) {
+            const x = Math.random() * (width - 100) + 50;
+            const y = Math.random() * (height - STATS_HEIGHT - 100) + 50; 
+            balls.push(new Ball(x, y, type));
+        }
+
+        function clearArena() { balls = []; particles = []; lasers = []; pools = []; }
+
         function checkCollisions() {
-            const currentTime = Date.now();
-            
-            gameState.balls.forEach(ball => {
-                if (!ball.isActive) return;
-                
-                gameState.rectangles.forEach(rectObj => {
-                    if (ball.player !== rectObj.player || rectObj.hp <= 0) return;
-                    
-                    const rect = rectObj.element;
-                    const rectLeft = 0;
-                    const rectTop = rectObj.top;
-                    const rectWidth = ball.squareWidth;
-                    const rectHeight = rectObj.height;
-                    
-                    // Check collision
-                    const closestX = Math.max(rectLeft, Math.min(ball.x, rectLeft + rectWidth));
-                    const closestY = Math.max(rectTop, Math.min(ball.y, rectTop + rectHeight));
-                    
-                    const distanceX = ball.x - closestX;
-                    const distanceY = ball.y - closestY;
-                    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-                    
-                    // Prevent multiple hits in quick succession
-                    if (distance <= ball.radius && currentTime - ball.lastHitTime > 100) {
-                        ball.lastHitTime = currentTime;
-                        handleCollision(ball, rectObj);
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    const b1 = balls[i]; const b2 = balls[j];
+                    const dx = b2.x - b1.x; const dy = b2.y - b1.y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist < b1.radius + b2.radius) {
+                        const angle = Math.atan2(dy, dx);
+                        if (b1.type === 'black hole' && b2.type === 'black hole') { triggerGlobalNuke(b1); return; }
+                        
+                        // Nerf: Min spawn rate is now 1.0s (was 0.1s)
+                        if (b1.type === 'randomizer') b1.baseSpawnTime = Math.max(1.0, b1.baseSpawnTime - 0.02);
+                        if (b2.type === 'randomizer') b2.baseSpawnTime = Math.max(1.0, b2.baseSpawnTime - 0.02);
+
+                        if (b1.type === 'black hole') b2.takeDamage(b2.maxHp * 5, b1);
+                        else if (b2.type === 'black hole') b1.takeDamage(b1.maxHp * 5, b2);
+
+                        const push = 0.4;
+                        if (b1.type !== 'black hole') { b1.vx -= Math.cos(angle) * push; b1.vy -= Math.sin(angle) * push; b1.vx *= COLLISION_BOOST; b1.vy *= COLLISION_BOOST; }
+                        if (b2.type !== 'black hole') { b2.vx += Math.cos(angle) * push; b2.vy += Math.sin(angle) * push; b2.vx *= COLLISION_BOOST; b2.vy *= COLLISION_BOOST; }
+
+                        if (b1.type === 'unarmed') b2.takeDamage(Math.round(Math.hypot(b1.vx, b1.vy)), b1);
+                        if (b2.type === 'unarmed') b1.takeDamage(Math.round(Math.hypot(b2.vx, b2.vy)), b2);
                     }
-                });
-            });
-        }
-        
-        // Handle collision - FIXED: Growth only on hit, not bounce
-        function handleCollision(ball, rectObj) {
-            // Calculate damage
-            let damage = ball.damage;
-            
-            // Apply infinity effect
-            if (ball.types.includes("infinity")) {
-                damage = rectObj.hp;
-            }
-            
-            // Apply damage
-            rectObj.hp -= damage;
-            
-            // Update rectangle display
-            if (rectObj.hp > 0) {
-                rectObj.element.textContent = `HP: ${Math.ceil(rectObj.hp)}`;
-                const damagePercent = rectObj.hp / rectObj.maxHp;
-                rectObj.element.style.opacity = `${0.5 + (damagePercent / 2)}`;
-            } else {
-                // Rectangle destroyed
-                rectObj.element.style.display = 'none';
-                rectObj.hp = 0;
-                
-                // Update rectangles left count
-                gameState.rectanglesLeft--;
-                
-                // Update player score
-                if (ball.player === 1) {
-                    gameState.playerScores.player1 += rectObj.maxHp;
-                } else {
-                    gameState.playerScores.player2 += rectObj.maxHp;
+                    checkWeaponHit(b1, b2); checkWeaponHit(b2, b1);
                 }
-                
-                // Check if all rectangles are destroyed
-                checkWinCondition();
-            }
-            
-            // Apply speedy effect
-            if (ball.types.includes("speedy")) {
-                ball.maxSpeed += ballTypes.speedy.speedIncrease;
-                ball.hitCount++;
-            }
-            
-            // Apply growth effect on HIT (not bounce) - FIXED: Only grows when hitting
-            if (ball.types.includes("growth")) {
-                ball.radius += ballTypes.growth.growthPerHit;
-                const newSize = ball.radius * 2;
-                ball.element.style.width = `${newSize}px`;
-                ball.element.style.height = `${newSize}px`;
-            }
-            
-            // Bounce the ball - this is a rectangle bounce
-            ball.vy = -Math.abs(ball.vy) * BOUNCE_DAMPENING;
-            
-            // Add random factor
-            ball.vx += (Math.random() - 0.5) * 10;
-            
-            // Count as a bounce on rectangle
-            handleBounce(ball, true);
-        }
-        
-        // Check win condition
-        function checkWinCondition() {
-            // Count active rectangles
-            let activeRectangles = 0;
-            gameState.rectangles.forEach(rect => {
-                if (rect.hp > 0) activeRectangles++;
-            });
-            
-            gameState.rectanglesLeft = activeRectangles;
-            
-            if (activeRectangles === 0) {
-                endGame(true);
             }
         }
-        
-        // Duplicate balls
-        function duplicateBalls() {
-            const ballsToAdd = [];
-            
-            gameState.balls.forEach(ball => {
-                if (ball.types.includes("duplicator") && ball.isActive) {
-                    // Create a clone
-                    const newBall = {
-                        ...ball,
-                        element: ball.element.cloneNode(true),
-                        vx: -ball.vx,
-                        vy: -ball.vy,
-                        createdAt: Date.now()
-                    };
-                    
-                    // Set color for the new ball
-                    setElementGradient(newBall.element, newBall.types);
-                    
-                    // Add to square
-                    const square = ball.player === 1 ? square1 : square2;
-                    square.appendChild(newBall.element);
-                    
-                    ballsToAdd.push(newBall);
-                }
-            });
-            
-            // Add new balls
-            gameState.balls.push(...ballsToAdd);
-            
-            // Update display
-            totalBallsDisplay.textContent = gameState.balls.length;
-        }
-        
-        // Update displays
-        function updateDisplays() {
-            const seconds = Math.floor(gameState.currentTime / 1000);
-            timeDisplay.textContent = `${seconds}s`;
-            
-            rectanglesLeftDisplay.textContent = gameState.rectanglesLeft;
-            
-            player1ScoreDisplay.textContent = gameState.playerScores.player1;
-            player2ScoreDisplay.textContent = gameState.playerScores.player2;
-        }
-        
-        // End the game
-        function endGame(isWin) {
-            gameState.isRunning = false;
-            
-            if (gameState.duplicatorInterval) {
-                clearInterval(gameState.duplicatorInterval);
-                gameState.duplicatorInterval = null;
-            }
-            
-            if (isWin) {
-                messageTitle.textContent = "Victory!";
-                messageText.textContent = `All rectangles destroyed in ${Math.floor(gameState.currentTime / 1000)} seconds!`;
-            } else {
-                messageTitle.textContent = "Game Over";
-                messageText.textContent = "All balls have been lost!";
-            }
-            
-            gameMessage.style.display = 'block';
-            
-            startBtn.disabled = false;
-        }
-        
-        // Reset the game
-        function resetGame() {
-            initGame();
-            
-            gameState.selectedBallTypes = { player1: [], player2: [] };
-            gameState.currentPlayerSelecting = 1;
-            
-            updateBallPreviews();
-            
-            ballTypeElements.forEach(el => {
-                el.classList.remove('selected');
-                el.style.pointerEvents = 'auto';
-                el.style.opacity = '1';
-            });
-            
-            startBtn.disabled = false;
-            assignBtn.disabled = false;
-        }
-        
-        // Event Listeners
-        
-        // Ball type selection
-        ballTypeElements.forEach(el => {
-            el.addEventListener('click', function() {
-                const type = this.dataset.type;
-                const player = `player${gameState.currentPlayerSelecting}`;
-                
-                // Check if already selected
-                const index = gameState.selectedBallTypes[player].indexOf(type);
-                
-                if (index > -1) {
-                    // Remove selection
-                    this.classList.remove('selected');
-                    gameState.selectedBallTypes[player].splice(index, 1);
-                } else {
-                    // Add selection
-                    if (gameState.selectedBallTypes[player].length >= 5) {
-                        alert(`Player ${gameState.currentPlayerSelecting} already has 5 ball types selected!`);
-                        return;
+
+        function checkWeaponHit(attacker, victim) {
+            if (attacker.hitCooldown > 0) return;
+            if (victim.id === attacker.creatorId || attacker.id === victim.creatorId) return;
+            if (['zen', 'nuke', 'black hole', 'randomizer', 'eggthrower'].includes(attacker.type)) return;
+            let hit = false; let damage = 0;
+
+            if (attacker.type === 'sword') {
+                const sX = attacker.x + Math.cos(attacker.swordAngle) * 35;
+                const sY = attacker.y + Math.sin(attacker.swordAngle) * 35;
+                if (Math.hypot(sX - victim.x, sY - victim.y) < victim.radius + 8) { hit = true; damage = attacker.swordDmg || 5; }
+            } else if (attacker.type === 'dagger') {
+                const dX = attacker.x + Math.cos(attacker.swingAngle) * 30;
+                const dY = attacker.y + Math.sin(attacker.swingAngle) * 30;
+                if (Math.hypot(dX - victim.x, dY - victim.y) < victim.radius + 4) { hit = true; damage = attacker.daggerDmg || 1; }
+            } else if (attacker.type === 'heartstealer') {
+                const wX = attacker.x + Math.cos(attacker.wandAngle) * 38;
+                const wY = attacker.y + Math.sin(attacker.wandAngle) * 38;
+                if (Math.hypot(wX - victim.x, wY - victim.y) < victim.radius + 10) { hit = true; damage = attacker.wandDmg || 1; }
+            } else if (attacker.type === 'dark magician') {
+                const bX = attacker.x + Math.cos(attacker.bookAngle) * 35;
+                const bY = attacker.y + Math.sin(attacker.bookAngle) * 35;
+                if (Math.hypot(bX - victim.x, bY - victim.y) < victim.radius + 8) {
+                    hit = true; damage = 2;
+                    if (!attacker.isClone && balls.length < 50) {
+                        setTimeout(() => balls.push(new Ball(attacker.x, attacker.y, victim.type, true, attacker.nextCloneHp, -1, attacker.id)), 30);
                     }
-                    
-                    this.classList.add('selected');
-                    gameState.selectedBallTypes[player].push(type);
                 }
-                
-                updateBallPreviews();
-            });
-        });
-        
-        // Assign button
-        assignBtn.addEventListener('click', function() {
-            gameState.currentPlayerSelecting = gameState.currentPlayerSelecting === 1 ? 2 : 1;
-            this.textContent = `Assign to Player ${gameState.currentPlayerSelecting}`;
-            
-            // Update selection UI
-            ballTypeElements.forEach(el => {
-                el.classList.remove('selected');
-            });
-            
-            // Show current player's selections
-            const currentTypes = gameState.selectedBallTypes[`player${gameState.currentPlayerSelecting}`];
-            ballTypeElements.forEach(el => {
-                if (currentTypes.includes(el.dataset.type)) {
-                    el.classList.add('selected');
+            } else if (attacker.type === 'slammer') {
+                if (Math.hypot(attacker.x - victim.x, attacker.y - victim.y) < victim.radius + attacker.radius + 5) { hit = true; damage = 1; }
+            }
+
+            if (hit) { victim.takeDamage(damage, attacker); attacker.hitCooldown = 12; }
+        }
+
+        function updateStatsUI() {
+            if (balls.length === 0) { 
+                statsPanel.innerHTML = '<div class="text-[10px] opacity-50 lowercase p-2">empty arena</div>'; 
+                return; 
+            }
+            statsPanel.innerHTML = balls.map(b => {
+                const primary = b.getPrimaryStat();
+                const hpPercent = Math.max(0, (b.hp / b.maxHp) * 100);
+                const borderColor = b.color === '#000000' && b.type !== 'black hole' ? '#555' : (b.type === 'black hole' ? '#4f46e5' : b.color);
+                return `
+                    <div class="stats-card p-2 text-[10px] rounded shadow-sm border-l-4 flex-shrink-0" style="border-color: ${borderColor}">
+                        <div class="flex justify-between items-start gap-1">
+                            <div class="font-bold lowercase truncate w-20 text-white leading-none">${b.type}${b.isClone ? '*' : ''}</div>
+                            <span class="font-mono text-blue-400 bg-blue-900/30 px-1 rounded">${Math.ceil(b.hp)}</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1 mt-1 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500 transition-all duration-300" style="width: ${hpPercent}%"></div>
+                        </div>
+                        <div class="flex flex-col gap-0.5 mt-1.5">
+                            <div class="flex justify-between gap-2 uppercase tracking-tighter">
+                               <span class="opacity-40 text-[9px]">${primary.label}:</span>
+                               <span class="font-bold text-slate-200">${primary.val}</span>
+                            </div>
+                            <div class="flex justify-between gap-2 uppercase tracking-tighter">
+                               <span class="opacity-40 text-[9px]">vel:</span>
+                               <span class="text-slate-400">${Math.round(Math.hypot(b.vx, b.vy))}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+
+        let lastStatUpdate = 0;
+        function loop(timestamp) {
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#111827'; ctx.fillRect(0, height - STATS_HEIGHT, width, STATS_HEIGHT);
+
+            // Draw pools
+            for (let i = pools.length - 1; i >= 0; i--) {
+                const p = pools[i]; p.life -= 0.0166;
+                if (p.life <= 0) pools.splice(i, 1);
+                else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(254, 240, 138, ${Math.min(0.3, p.life)})`;
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r/2, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(234, 179, 8, ${Math.min(0.5, p.life)})`;
+                    ctx.fill();
                 }
-            });
-        });
-        
-        // Start button
-        startBtn.addEventListener('click', startGame);
-        
-        // Reset button
-        resetBtn.addEventListener('click', resetGame);
-        
-        // Play again button
-        playAgainBtn.addEventListener('click', function() {
-            gameMessage.style.display = 'none';
-            resetGame();
-        });
-        
-        // Initialize
-        window.addEventListener('load', initGame);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                if (p.life <= 0) particles.splice(i, 1);
+                else { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 2, 2); }
+            }
+            ctx.globalAlpha = 1;
+            for (let i = lasers.length - 1; i >= 0; i--) {
+                const l = lasers[i]; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = l.life/2;
+                ctx.beginPath(); ctx.moveTo(l.x1, l.y1); ctx.lineTo(l.x2, l.y2); ctx.stroke();
+                l.life--; if (l.life <= 0) lasers.splice(i, 1);
+            }
+
+            checkCollisions();
+            for (let i = balls.length - 1; i >= 0; i--) {
+                const b = balls[i]; b.update(); b.draw();
+                if (b.hp <= 0) { createParticles(b.x, b.y, b.color); balls.splice(i, 1); }
+            }
+
+            if (timestamp - lastStatUpdate > 100) { updateStatsUI(); lastStatUpdate = timestamp; }
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        spawnBall('zen');
+        requestAnimationFrame(loop);
     </script>
 </body>
 </html>

@@ -5,94 +5,158 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>VS. Balls</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
         body {
             margin: 0;
             overflow: hidden;
             background-color: #0f172a;
             color: white;
-            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
             user-select: none;
             touch-action: none;
         }
-        canvas {
-            display: block;
+        
+        /* Modern UI Styles */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
-        .stats-card {
-            background: rgba(30, 41, 59, 0.9);
-            backdrop-filter: blur(8px);
-            border-left: 4px solid;
-            min-width: 150px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            transition: all 0.2s ease;
-        }
-        input[type="number"], input[type="text"] {
-            font-size: 16px !important;
-        }
-        #stats-panel::-webkit-scrollbar {
-            height: 4px;
-        }
-        #stats-panel::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-        }
-        #flashbang {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 100;
-        }
-        .menu-hidden {
-            display: none !important;
-        }
-        .spawn-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-        .spawn-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+
+        .legacy-mode .glass-panel {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: none;
+            border: 1px solid #334155;
+            box-shadow: none;
             border-radius: 4px;
         }
+
+        .stats-card {
+            min-width: 140px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+        #flashbang {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; pointer-events: none; z-index: 100;
+        }
+
+        .menu-hidden { display: none !important; }
+        
+        input[type="number"], input[type="text"] { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Legacy Design Overrides */
+        body.legacy-mode { background-color: #0f172a; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .legacy-mode canvas { filter: none !important; }
+        .legacy-mode .modern-only { display: none; }
     </style>
 </head>
-<body>
+<body class="bg-slate-900 text-white overflow-hidden">
 
     <div id="flashbang"></div>
 
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="menu-hidden fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-sm shadow-2xl lowercase">
+            <h2 class="text-xl font-bold mb-6 text-slate-200 flex items-center gap-2">
+                <span>⚙️</span> settings
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-slate-300">legacy design</span>
+                        <span class="text-[10px] text-slate-500">use original flat visual style</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-legacy" class="sr-only peer" onchange="toggleLegacyMode()">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-slate-300">no limit scaling</span>
+                        <span class="text-[10px] text-slate-500">uncap all stat gains (danger)</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-nolimit" class="sr-only peer" onchange="updateSettings()">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                    </label>
+                </div>
+
+                <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-bold text-slate-300">max ball count</span>
+                        <span class="text-[10px] text-slate-500">prevents crashes</span>
+                    </div>
+                    <input type="number" id="setting-maxballs" value="100" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white outline-none focus:border-blue-500 transition-colors font-mono text-sm" onchange="updateSettings()">
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="closeSettingsModal()" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg text-sm font-bold transition-colors">close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEAM MODAL -->
     <div id="team-modal" class="menu-hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-md shadow-2xl lowercase">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-md shadow-2xl lowercase transform transition-all">
             <h2 class="text-lg font-bold mb-4 text-amber-400">spawn teams</h2>
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-blue-900/20 p-3 rounded-xl border border-blue-500/30">
                     <span class="text-[10px] text-blue-400 font-bold block mb-2 uppercase tracking-widest">team alpha</span>
                     <div id="team-a-slots" class="space-y-2">
-                        <select class="team-a-select w-full bg-slate-800 border border-slate-700 rounded p-1 text-xs text-white"></select>
-                        <select class="team-a-select w-full bg-slate-800 border border-slate-700 rounded p-1 text-xs text-white"></select>
-                        <select class="team-a-select w-full bg-slate-800 border border-slate-700 rounded p-1 text-xs text-white"></select>
+                        <select class="team-a-select w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors"></select>
+                        <select class="team-a-select w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors"></select>
+                        <select class="team-a-select w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors"></select>
                     </div>
                 </div>
                 <div class="bg-red-900/20 p-3 rounded-xl border border-red-500/30">
                     <span class="text-[10px] text-red-400 font-bold block mb-2 uppercase tracking-widest">team omega</span>
                     <div id="team-b-slots" class="space-y-2">
-                        <select class="team-b-select w-full bg-slate-800 border border-slate-700 rounded p-1 text-xs text-white"></select>
-                        <select class="team-b-select w-full bg-slate-800 border border-slate-700 rounded p-1 text-xs text-white"></select>
-                        <select class="team-b-select w-full bg-slate-800 border border-slate-700 rounded p-1 text-xs text-white"></select>
+                        <select class="team-b-select w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-red-500 transition-colors"></select>
+                        <select class="team-b-select w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-red-500 transition-colors"></select>
+                        <select class="team-b-select w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white outline-none focus:border-red-500 transition-colors"></select>
                     </div>
                 </div>
             </div>
             <div class="mt-6 flex gap-2">
-                <button onclick="confirmTeamSpawn()" class="flex-1 bg-amber-600 hover:bg-amber-500 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg">deploy match</button>
-                <button onclick="closeTeamModal()" class="px-4 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg text-sm transition-colors">cancel</button>
+                <button onclick="confirmTeamSpawn()" class="flex-1 bg-amber-600 hover:bg-amber-500 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg hover:shadow-amber-500/20">deploy match</button>
+                <button onclick="closeTeamModal()" class="px-6 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg text-sm font-bold transition-colors">cancel</button>
             </div>
         </div>
     </div>
 
+    <!-- CUSTOM BALL MODAL -->
     <div id="custom-modal" class="menu-hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-sm shadow-2xl lowercase">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-sm shadow-2xl lowercase">
             <h2 class="text-lg font-bold mb-4 text-cyan-400">custom ball config</h2>
             <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 spawn-scroll">
                 <div class="space-y-3">
@@ -100,12 +164,12 @@
                         <label class="text-[10px] text-cyan-500 font-bold block mb-2 uppercase tracking-widest">combat stats</label>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <span class="text-[9px] text-slate-500 block">starting damage</span>
-                                <input type="text" id="c-dmg" placeholder="5" value="5" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-2 text-white outline-none focus:border-cyan-500">
+                                <span class="text-[9px] text-slate-500 block mb-1">starting damage</span>
+                                <input type="text" id="c-dmg" placeholder="5" value="5" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-white outline-none focus:border-cyan-500 text-xs">
                             </div>
                             <div>
-                                <span class="text-[9px] text-slate-500 block">dmg per hit (+scaling)</span>
-                                <input type="text" id="c-dmg-add" placeholder="1" value="1" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-2 text-white outline-none focus:border-cyan-500">
+                                <span class="text-[9px] text-slate-500 block mb-1">dmg per hit (+scaling)</span>
+                                <input type="text" id="c-dmg-add" placeholder="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-white outline-none focus:border-cyan-500 text-xs">
                             </div>
                         </div>
                     </div>
@@ -116,75 +180,97 @@
                 </div>
             </div>
             <div class="mt-6 flex gap-2">
-                <button onclick="confirmCustomSpawn()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg">spawn custom</button>
-                <button onclick="closeCustomModal()" class="px-4 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg text-sm transition-colors">cancel</button>
+                <button onclick="confirmCustomSpawn()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg hover:shadow-cyan-500/20">spawn custom</button>
+                <button onclick="closeCustomModal()" class="px-6 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg text-sm font-bold transition-colors">cancel</button>
             </div>
         </div>
     </div>
 
+    <!-- MAIN UI OVERLAY -->
     <div class="fixed top-4 left-4 z-50 flex flex-col gap-2">
-        <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold lowercase text-slate-500">VS. Balls</h1>
-            <button id="spawn-toggle-btn" onclick="toggleMenu()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-bold shadow-lg transition-all lowercase">
-                spawn
+        <div class="flex items-center gap-2 p-2 rounded-xl glass-panel border-none">
+            <h1 class="text-lg font-black lowercase text-slate-200 px-2 tracking-tight">VS. Balls</h1>
+            <div class="h-6 w-px bg-slate-700 mx-1"></div>
+            <button id="spawn-toggle-btn" onclick="toggleMenu()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold shadow-lg shadow-blue-900/20 transition-all lowercase">
+                spawn menu
             </button>
-            <button onclick="clearArena()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition shadow-lg lowercase">
-                clear
+            <button onclick="clearArena()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold transition shadow-lg lowercase">
+                clear all
+            </button>
+            <button onclick="openSettingsModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition lowercase text-slate-400 hover:text-white">
+                ⚙️
             </button>
         </div>
         
-        <div id="spawn-menu" class="menu-hidden bg-slate-900/95 backdrop-blur-md p-4 rounded-xl border border-slate-700 shadow-2xl flex flex-col gap-3 w-56">
-            <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
-                <label class="text-[10px] lowercase text-slate-400 font-bold">base hp:</label>
-                <input type="text" id="default-hp" value="100" class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 outline-none text-blue-400 text-right text-base font-mono">
+        <!-- SPAWN MENU -->
+        <div id="spawn-menu" class="menu-hidden glass-panel p-4 rounded-xl flex flex-col gap-3 w-64 shadow-2xl animate-in slide-in-from-top-4 duration-200">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-700/50 pb-3">
+                <label class="text-[10px] lowercase text-slate-400 font-bold uppercase tracking-widest">base hp</label>
+                <input type="text" id="default-hp" value="100" class="w-24 bg-slate-900/50 border border-slate-700 rounded px-2 py-1 outline-none text-blue-400 text-right text-sm font-mono focus:border-blue-500 transition-colors">
             </div>
 
-            <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1 spawn-scroll">
-                <button onclick="openTeamModal()" class="col-span-2 px-2 py-3 bg-amber-500 text-black hover:bg-amber-400 rounded text-xs font-bold transition-colors lowercase">spawn teams</button>
-                <button onclick="openCustomModal()" class="col-span-2 px-2 py-3 bg-cyan-500 text-black hover:bg-cyan-400 rounded text-xs font-bold transition-colors lowercase">custom ball</button>
-                <button onclick="spawnUltraMenu()" class="col-span-2 px-2 py-3 bg-pink-600 text-white hover:bg-pink-500 rounded text-xs font-bold transition-colors lowercase shadow-[0_0_15px_rgba(219,39,119,0.5)]">ultra spawn</button>
-                <button onclick="spawnBall('octoshooter')" class="col-span-2 px-2 py-2 bg-indigo-600 text-white hover:bg-indigo-500 rounded text-xs font-bold transition-colors lowercase">octoshooter</button>
-                <button onclick="spawnBall('saw')" class="px-2 py-2 bg-slate-400 text-black hover:bg-white rounded text-xs font-bold transition-colors lowercase">saw</button>
-                <button onclick="spawnBall('grabber')" class="px-2 py-2 bg-orange-900 text-white hover:bg-orange-800 rounded text-xs font-bold transition-colors lowercase">grabber</button>
-                <button onclick="spawnBall('poison')" class="px-2 py-2 bg-lime-500 text-black hover:bg-lime-400 rounded text-xs font-bold transition-colors lowercase">poison</button>
-                <button onclick="spawnBall('shapeshield')" class="px-2 py-2 bg-cyan-400 text-black hover:bg-cyan-300 rounded text-xs font-bold transition-colors lowercase">shapeshield</button>
-                <button onclick="spawnBall('splitter')" class="px-2 py-2 bg-teal-600 text-white hover:bg-teal-500 rounded text-xs font-bold transition-colors lowercase">splitter</button>
-                <button onclick="spawnBall('bonker')" class="px-2 py-2 bg-stone-500 text-white hover:bg-stone-400 rounded text-xs font-bold transition-colors lowercase">bonker</button>
-                <button onclick="spawnBall('slapper')" class="px-2 py-2 bg-rose-400 text-white hover:bg-rose-300 rounded text-xs font-bold transition-colors lowercase">slapper</button>
-                <button onclick="spawnBall('BIRCH TREE')" class="px-2 py-2 bg-white text-black border border-black hover:bg-slate-100 rounded text-xs font-bold transition-colors lowercase">birch</button>
-                <button onclick="spawnBall('gargantuan')" class="px-2 py-2 bg-red-900 border border-red-500/50 hover:bg-red-800 rounded text-xs font-bold transition-colors lowercase text-white">gargantuan</button>
-                <button onclick="spawnBall('sword')" class="px-2 py-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-500/40 rounded text-xs transition lowercase">sword</button>
-                <button onclick="spawnBall('laser')" class="px-2 py-2 bg-red-600/20 border border-red-500/30 hover:bg-red-500/40 rounded text-xs transition lowercase">laser</button>
-                <button onclick="spawnBall('unarmed')" class="px-2 py-2 bg-green-600/20 border border-green-500/30 hover:bg-green-500/40 rounded text-xs transition lowercase">unarmed</button>
-                <button onclick="spawnBall('dark magician')" class="px-2 py-2 bg-purple-600/20 border border-purple-500/30 hover:bg-purple-500/40 rounded text-xs transition lowercase">mage</button>
-                <button onclick="spawnBall('randomizer')" class="px-2 py-2 bg-cyan-600/20 border border-cyan-500/30 hover:bg-cyan-500/40 rounded text-xs transition lowercase">random</button>
-                <button onclick="spawnBall('dagger')" class="px-2 py-2 bg-yellow-600/20 border border-yellow-500/30 hover:bg-yellow-500/40 rounded text-xs transition lowercase">dagger</button>
-                <button onclick="spawnBall('heartstealer')" class="px-2 py-2 bg-pink-500/20 border border-pink-500/30 hover:bg-pink-500/40 rounded text-xs transition lowercase">heart</button>
-                <button onclick="spawnBall('eggthrower')" class="px-2 py-2 bg-yellow-100/20 border border-yellow-200/30 hover:bg-yellow-100/40 rounded text-xs transition lowercase text-yellow-200">egg</button>
-                <button onclick="spawnBall('demolitionist')" class="px-2 py-2 bg-orange-700/20 border border-orange-500/30 hover:bg-orange-600/40 rounded text-xs transition lowercase text-orange-400">demo</button>
-                <button onclick="spawnBall('black hole')" class="px-2 py-2 bg-indigo-950/40 border border-indigo-400/30 hover:bg-indigo-900/60 rounded text-xs transition lowercase">void</button>
-                <button onclick="spawnBall('zen')" class="px-2 py-2 bg-zinc-900/40 border border-zinc-700 hover:bg-zinc-800 rounded text-xs transition lowercase">zen</button>
-                <button onclick="spawnBall('slammer')" class="px-2 py-2 bg-orange-600/20 border border-orange-500/30 hover:bg-orange-500/40 rounded text-xs transition lowercase">slam</button>
-                <button onclick="spawnBall('nuke')" class="px-2 py-2 bg-white text-black hover:bg-slate-200 rounded text-xs font-bold transition lowercase">nuke</button>
+            <div class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto pr-1 spawn-scroll content-start">
+                <!-- Special Actions -->
+                <button onclick="openTeamModal()" class="col-span-2 px-2 py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black rounded-lg text-xs font-bold transition-all lowercase shadow-lg shadow-amber-900/20">spawn teams</button>
+                <button onclick="openCustomModal()" class="col-span-2 px-2 py-3 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-black rounded-lg text-xs font-bold transition-all lowercase shadow-lg shadow-cyan-900/20">custom ball</button>
+                <button onclick="spawnUltraMenu()" class="col-span-2 px-2 py-3 bg-gradient-to-r from-pink-700 to-pink-600 hover:from-pink-600 hover:to-pink-500 text-white rounded-lg text-xs font-bold transition-all lowercase shadow-[0_0_15px_rgba(219,39,119,0.3)] border border-pink-400/30">✨ ultra spawn ✨</button>
+                
+                <div class="col-span-2 h-px bg-slate-700/50 my-1"></div>
+                
+                <button onclick="spawnBall('freezer')" class="px-2 py-2.5 bg-sky-300/10 border border-sky-400/30 text-sky-200 hover:bg-sky-400/20 rounded-lg text-xs font-bold transition lowercase">freezer</button>
+                <button onclick="spawnBall('burner')" class="px-2 py-2.5 bg-orange-500/10 border border-orange-500/30 text-orange-300 hover:bg-orange-500/20 rounded-lg text-xs font-bold transition lowercase">burner</button>
+                <button onclick="spawnBall('deflector')" class="col-span-2 px-2 py-2.5 bg-slate-500/20 border border-slate-400 text-slate-200 hover:bg-slate-500/30 rounded-lg text-xs font-bold transition lowercase">deflector</button>
+
+                <div class="col-span-2 h-px bg-slate-700/50 my-1"></div>
+                <span class="col-span-2 text-[9px] text-slate-500 font-bold uppercase tracking-widest">standard types</span>
+
+                <button onclick="spawnBall('octoshooter')" class="col-span-2 px-2 py-2 bg-indigo-600 text-white hover:bg-indigo-500 rounded-lg text-xs font-bold transition-colors lowercase">octoshooter</button>
+                <button onclick="spawnBall('saw')" class="px-2 py-2 bg-slate-400 text-black hover:bg-white rounded-lg text-xs font-bold transition-colors lowercase">saw</button>
+                <button onclick="spawnBall('grabber')" class="px-2 py-2 bg-orange-900 text-white hover:bg-orange-800 rounded-lg text-xs font-bold transition-colors lowercase">grabber</button>
+                <button onclick="spawnBall('poison')" class="px-2 py-2 bg-lime-500 text-black hover:bg-lime-400 rounded-lg text-xs font-bold transition-colors lowercase">poison</button>
+                <button onclick="spawnBall('shapeshield')" class="px-2 py-2 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg text-xs font-bold transition-colors lowercase">shapeshield</button>
+                <button onclick="spawnBall('splitter')" class="px-2 py-2 bg-teal-600 text-white hover:bg-teal-500 rounded-lg text-xs font-bold transition-colors lowercase">splitter</button>
+                <button onclick="spawnBall('bonker')" class="px-2 py-2 bg-stone-500 text-white hover:bg-stone-400 rounded-lg text-xs font-bold transition-colors lowercase">bonker</button>
+                <button onclick="spawnBall('slapper')" class="px-2 py-2 bg-rose-400 text-white hover:bg-rose-300 rounded-lg text-xs font-bold transition-colors lowercase">slapper</button>
+                <button onclick="spawnBall('BIRCH TREE')" class="px-2 py-2 bg-white text-black border border-black hover:bg-slate-100 rounded-lg text-xs font-bold transition-colors lowercase">birch</button>
+                <button onclick="spawnBall('gargantuan')" class="px-2 py-2 bg-red-950 border border-red-500/50 hover:bg-red-900 rounded-lg text-xs font-bold transition-colors lowercase text-red-200">gargantuan</button>
+                <button onclick="spawnBall('sword')" class="px-2 py-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-500/40 rounded-lg text-xs transition lowercase">sword</button>
+                <button onclick="spawnBall('laser')" class="px-2 py-2 bg-red-600/20 border border-red-500/30 hover:bg-red-500/40 rounded-lg text-xs transition lowercase">laser</button>
+                <button onclick="spawnBall('unarmed')" class="px-2 py-2 bg-green-600/20 border border-green-500/30 hover:bg-green-500/40 rounded-lg text-xs transition lowercase">unarmed</button>
+                <button onclick="spawnBall('dark magician')" class="px-2 py-2 bg-purple-600/20 border border-purple-500/30 hover:bg-purple-500/40 rounded-lg text-xs transition lowercase">mage</button>
+                <button onclick="spawnBall('randomizer')" class="px-2 py-2 bg-cyan-600/20 border border-cyan-500/30 hover:bg-cyan-500/40 rounded-lg text-xs transition lowercase">random</button>
+                <button onclick="spawnBall('dagger')" class="px-2 py-2 bg-yellow-600/20 border border-yellow-500/30 hover:bg-yellow-500/40 rounded-lg text-xs transition lowercase">dagger</button>
+                <button onclick="spawnBall('heartstealer')" class="px-2 py-2 bg-pink-500/20 border border-pink-500/30 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">heart</button>
+                <button onclick="spawnBall('eggthrower')" class="px-2 py-2 bg-yellow-100/20 border border-yellow-200/30 hover:bg-yellow-100/40 rounded-lg text-xs transition lowercase text-yellow-200">egg</button>
+                <button onclick="spawnBall('demolitionist')" class="px-2 py-2 bg-orange-700/20 border border-orange-500/30 hover:bg-orange-600/40 rounded-lg text-xs transition lowercase text-orange-400">demo</button>
+                <button onclick="spawnBall('black hole')" class="px-2 py-2 bg-indigo-950/40 border border-indigo-400/30 hover:bg-indigo-900/60 rounded-lg text-xs transition lowercase">void</button>
+                <button onclick="spawnBall('zen')" class="px-2 py-2 bg-zinc-900/40 border border-zinc-500 hover:bg-zinc-800 rounded-lg text-xs transition lowercase">zen</button>
+                <button onclick="spawnBall('slammer')" class="px-2 py-2 bg-orange-600/20 border border-orange-500/30 hover:bg-orange-500/40 rounded-lg text-xs transition lowercase">slam</button>
+                <button onclick="spawnBall('nuke')" class="px-2 py-2 bg-white text-black hover:bg-slate-200 rounded-lg text-xs font-bold transition lowercase">nuke</button>
+                <button onclick="spawnBall('starstriker')" class="px-2 py-2 bg-violet-600/20 border border-violet-500/30 hover:bg-violet-500/40 rounded-lg text-xs transition lowercase">starstriker</button>
+                <button onclick="spawnBall('gunner')" class="px-2 py-2 bg-amber-600/20 border border-amber-500/30 hover:bg-amber-500/40 rounded-lg text-xs transition lowercase">gunner</button>
             </div>
         </div>
 
-        <div id="ultra-menu" class="menu-hidden bg-slate-900/95 backdrop-blur-md p-4 rounded-xl border border-pink-500/50 shadow-[0_0_30px_rgba(219,39,119,0.3)] flex flex-col gap-3 w-56">
+        <div id="ultra-menu" class="menu-hidden glass-panel p-4 rounded-xl border border-pink-500/50 shadow-[0_0_30px_rgba(219,39,119,0.3)] flex flex-col gap-3 w-64 animate-in slide-in-from-top-4 duration-200">
             <div class="flex items-center justify-between border-b border-pink-500/20 pb-2">
                 <span class="text-[10px] text-pink-400 font-bold uppercase tracking-widest">ultra pool</span>
                 <button onclick="toggleUltraMenu()" class="text-slate-500 hover:text-white">✕</button>
             </div>
             <div class="grid grid-cols-1 gap-2">
-                <button onclick="spawnUltra('sword')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded text-xs transition lowercase">ultra sword</button>
-                <button onclick="spawnUltra('laser')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded text-xs transition lowercase">ultra laser</button>
-                <button onclick="spawnUltra('zen')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded text-xs transition lowercase">ultra zen/dvd</button>
-                <button onclick="spawnUltra('heartstealer')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded text-xs transition lowercase">ultra heartstealer</button>
-                <button onclick="spawnUltra('dagger')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded text-xs transition lowercase">ultra dagger</button>
+                <button onclick="spawnUltra('splitter')" class="px-2 py-2.5 bg-teal-500/20 border border-teal-400 hover:bg-teal-500/30 rounded-lg text-xs transition lowercase text-teal-200 font-bold">ultra splitter</button>
+                <button onclick="spawnUltra('unarmed')" class="px-2 py-2.5 bg-green-500/20 border border-green-400 hover:bg-green-500/30 rounded-lg text-xs transition lowercase text-green-200 font-bold">ultra unarmed</button>
+                <button onclick="spawnUltra('sword')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">ultra sword</button>
+                <button onclick="spawnUltra('laser')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">ultra laser</button>
+                <button onclick="spawnUltra('zen')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">ultra zen/dvd</button>
+                <button onclick="spawnUltra('heartstealer')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">ultra heartstealer</button>
+                <button onclick="spawnUltra('dagger')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">ultra dagger</button>
+                <button onclick="spawnUltra('demolitionist')" class="px-2 py-2 bg-pink-600/20 border border-pink-500 hover:bg-pink-500/40 rounded-lg text-xs transition lowercase">ultra demolitionist</button>
             </div>
         </div>
     </div>
 
-    <div id="stats-panel" class="fixed bottom-0 left-0 right-0 z-50 flex gap-2 p-4 overflow-x-auto whitespace-nowrap bg-slate-900/80 backdrop-blur-md border-t border-slate-700 pointer-events-auto min-h-[110px]">
+    <div id="stats-panel" class="fixed bottom-0 left-0 right-0 z-50 flex gap-3 p-4 overflow-x-auto whitespace-nowrap glass-panel min-h-[120px] items-center">
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -199,6 +285,14 @@
         const ultraMenu = document.getElementById('ultra-menu');
         const customModal = document.getElementById('custom-modal');
         const teamModal = document.getElementById('team-modal');
+        const settingsModal = document.getElementById('settings-modal');
+
+        // Settings State
+        const settings = {
+            legacy: false,
+            noLimit: false,
+            maxBalls: 100
+        };
 
         let width, height;
         let balls = [];
@@ -207,15 +301,16 @@
         let bullets = [];
         let pools = []; 
         let visuals = [];
+        let stars = [];
         
         let screenShake = 0;
         const BASE_DRAG = 0.999; 
         const BOUNCE = 1.0; 
         const COLLISION_BOOST = 1.05; 
         const BALL_RADIUS = 22;
-        const STATS_HEIGHT = 110;
+        const STATS_HEIGHT = 120;
 
-        const TYPES = ['sword', 'laser', 'unarmed', 'dark magician', 'dagger', 'heartstealer', 'slammer', 'eggthrower', 'demolitionist', 'black hole', 'zen', 'nuke', 'gargantuan', 'randomizer', 'saw', 'splitter', 'grabber', 'bonker', 'slapper', 'BIRCH TREE', 'shapeshield', 'poison', 'octoshooter'];
+        const TYPES = ['sword', 'laser', 'unarmed', 'dark magician', 'dagger', 'heartstealer', 'slammer', 'eggthrower', 'demolitionist', 'black hole', 'zen', 'nuke', 'gargantuan', 'randomizer', 'saw', 'splitter', 'grabber', 'bonker', 'slapper', 'BIRCH TREE', 'shapeshield', 'poison', 'octoshooter', 'freezer', 'burner', 'deflector', 'starstriker', 'gunner'];
 
         function formatNum(n) {
             if (n === null || n === undefined) return '0';
@@ -231,6 +326,20 @@
         function parseNum(str) {
             const val = parseFloat(str);
             return isNaN(val) ? 0 : val;
+        }
+
+        // --- Settings Functions ---
+        function openSettingsModal() { settingsModal.classList.remove('menu-hidden'); }
+        function closeSettingsModal() { settingsModal.classList.add('menu-hidden'); }
+        
+        function toggleLegacyMode() {
+            settings.legacy = document.getElementById('setting-legacy').checked;
+            document.body.classList.toggle('legacy-mode', settings.legacy);
+        }
+
+        function updateSettings() {
+            settings.noLimit = document.getElementById('setting-nolimit').checked;
+            settings.maxBalls = parseInt(document.getElementById('setting-maxballs').value) || 100;
         }
 
         function toggleMenu() {
@@ -260,7 +369,7 @@
             const container = document.getElementById('ability-toggles');
             container.innerHTML = TYPES.map(t => `
                 <label class="flex items-center gap-2 p-2 bg-slate-800/80 rounded border border-slate-700/50 cursor-pointer hover:bg-slate-700 transition-colors">
-                    <input type="checkbox" value="${t}" class="ability-checkbox w-4 h-4 rounded accent-cyan-500">
+                    <input type="checkbox" value="${t}" class="ability-checkbox w-4 h-4 rounded accent-cyan-500 bg-slate-700 border-slate-600">
                     <span class="text-[10px] font-bold uppercase tracking-tighter opacity-70">${t}</span>
                 </label>
             `).join('');
@@ -285,7 +394,12 @@
             teamModal.classList.remove('menu-hidden');
             const selects = document.querySelectorAll('.team-a-select, .team-b-select');
             selects.forEach(sel => {
-                sel.innerHTML = `<option value="">none</option>` + TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+                let opts = `<option value="">[ empty slot ]</option>`;
+                TYPES.forEach(t => {
+                    opts += `<option value="${t}">${t}</option>`;
+                    opts += `<option value="ultra ${t}">ultra ${t}</option>`;
+                });
+                sel.innerHTML = opts;
             });
         }
 
@@ -295,26 +409,36 @@
             const teamA = Array.from(document.querySelectorAll('.team-a-select')).map(s => s.value).filter(v => v !== "");
             const teamB = Array.from(document.querySelectorAll('.team-b-select')).map(s => s.value).filter(v => v !== "");
             
-            teamA.forEach((type, i) => {
-                const x = 150;
-                const y = (height - STATS_HEIGHT) * ((i + 1) / (teamA.length + 1));
+            const spawnTeamBall = (val, teamId, index, total) => {
+                let type = val;
+                let isUltra = false;
+                if (type.startsWith('ultra ')) {
+                    type = type.replace('ultra ', '');
+                    isUltra = true;
+                }
+                const x = teamId === 'alpha' ? 150 : width - 150;
+                const y = (height - STATS_HEIGHT) * ((index + 1) / (total + 1));
+                
                 const b = new Ball(x, y, type);
-                b.teamId = 'alpha';
+                b.teamId = teamId;
+                if (isUltra) {
+                    b.isUltra = true;
+                    b.radius *= 1.5;
+                    b.hp *= 2; b.maxHp *= 2;
+                    b.color = rotateHue(b.color, 75);
+                    b.setupUltra();
+                }
                 balls.push(b);
-            });
+            };
 
-            teamB.forEach((type, i) => {
-                const x = width - 150;
-                const y = (height - STATS_HEIGHT) * ((i + 1) / (teamB.length + 1));
-                const b = new Ball(x, y, type);
-                b.teamId = 'omega';
-                balls.push(b);
-            });
+            teamA.forEach((val, i) => spawnTeamBall(val, 'alpha', i, teamA.length));
+            teamB.forEach((val, i) => spawnTeamBall(val, 'omega', i, teamB.length));
 
             closeTeamModal();
         }
 
         function spawnUltra(type) {
+            if (balls.length >= settings.maxBalls) return;
             const x = Math.random() * (width - 200) + 100;
             const y = Math.random() * (height - STATS_HEIGHT - 200) + 100; 
             const b = new Ball(x, y, type);
@@ -328,7 +452,6 @@
         }
 
         function rotateHue(hex, degree) {
-            // Simple hue rotation - convert hex to HSL, rotate, then back to hex
             if (hex.startsWith('#')) {
                 let r = parseInt(hex.slice(1, 3), 16) / 255;
                 let g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -337,9 +460,8 @@
                 let max = Math.max(r, g, b), min = Math.min(r, g, b);
                 let h, s, l = (max + min) / 2;
                 
-                if (max === min) {
-                    h = s = 0;
-                } else {
+                if (max === min) { h = s = 0; } 
+                else {
                     let d = max - min;
                     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
                     if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
@@ -359,9 +481,8 @@
                     return p;
                 }
                 
-                if (s === 0) {
-                    r = g = b = l;
-                } else {
+                if (s === 0) { r = g = b = l; } 
+                else {
                     let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
                     let p = 2 * l - q;
                     r = hue2rgb(p, q, h + 1/3);
@@ -373,7 +494,6 @@
                     const hex = Math.round(x * 255).toString(16);
                     return hex.length === 1 ? '0' + hex : hex;
                 };
-                
                 return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
             }
             return hex;
@@ -406,6 +526,7 @@
                 this.radius = BALL_RADIUS;
                 if (this.hasAbility('gargantuan')) this.radius = BALL_RADIUS * (10/3); 
                 if (this.hasAbility('saw')) this.radius = BALL_RADIUS * 1.5;
+                if (this.hasAbility('freezer')) this.radius = BALL_RADIUS * 2.5;
 
                 this.visualRadius = this.radius;
                 this.lifeSpan = lifeSpan; 
@@ -420,11 +541,18 @@
                 this.color = this.getColor();
                 this.hitCooldown = 0;
                 this.stunTimer = 0;
+                this.frozenTimer = 0; 
+                this.storedVx = 0;
+                this.storedVy = 0;
                 
                 this.unarmedMin = 5;
                 this.unarmedMax = 30;
 
                 this.grabbedBy = null;
+
+                // Ultra Demolitionist infection
+                this.isDemoInfected = false;
+                this.demoInfectedTimer = 0;
 
                 this.setupType();
             }
@@ -447,7 +575,7 @@
                     case 'demolitionist': return '#f97316';
                     case 'black hole': return '#000000';
                     case 'zen': return '#1e293b';
-                    case 'dvd': return '#ffffff'; 
+                    case 'dvd': return '#ffffff';
                     case 'slammer': return '#ea580c';
                     case 'nuke': return '#ffffff';
                     case 'randomizer': return '#06b6d4';
@@ -456,13 +584,18 @@
                     case 'BIRCH TREE': return '#ffffff';
                     case 'shapeshield': return '#22d3ee';
                     case 'poison': return '#65a30d';
+                    case 'freezer': return '#7dd3fc';
+                    case 'burner': return '#f97316';
+                    case 'deflector': return '#94a3b8';
+                    case 'starstriker': return '#8b5cf6';
+                    case 'gunner': return '#d97706';
                     default: return '#ffffff';
                 }
             }
 
             hasAbility(name) {
                 if (this.type === name) return true;
-                if (this.type === 'dvd' && name === 'zen') return true; 
+                if (this.type === 'dvd' && name === 'zen') return true;
                 return this.customConfig && this.customConfig.abilities.includes(name);
             }
 
@@ -482,12 +615,9 @@
                     this.grabTicks = 0;
                     this.isGrabbing = false;
                     this.grabTargetId = null;
-                    this.handX = 0;
-                    this.handY = 0;
-                    this.handAngle = 0;
-                    this.handState = 'idle';
-                    this.handDist = 0;
-                    this.handMaxDist = 200;
+                    this.handX = 0; this.handY = 0;
+                    this.handAngle = 0; this.handState = 'idle';
+                    this.handDist = 0; this.handMaxDist = 200;
                 }
                 if (this.hasAbility('splitter')) { 
                     this.splitTimer = 7.5; 
@@ -518,51 +648,46 @@
                 if (this.hasAbility('nuke')) { this.nukeTimer = 20; this.isCharging = false; this.chargeTimer = 2.5; }
                 if (this.hasAbility('randomizer')) { this.spawnTimer = 2.5; this.baseSpawnTime = 2.5; }
                 if (this.hasAbility('gargantuan')) { this.gargantuanDmgMod = 0.05; }
-                if (this.hasAbility('bonker')) { 
-                    this.hammerAngle = 0; 
-                    this.hammerDmg = cfg ? cfg.dmg : 1; 
-                    this.critChance = 0; 
-                    this.critBonus = 0; 
+                if (this.hasAbility('bonker')) { this.hammerAngle = 0; this.hammerDmg = cfg ? cfg.dmg : 1; this.critChance = 0; this.critBonus = 0; }
+                if (this.hasAbility('slapper')) { this.slapAngle = 0; this.slapDmg = cfg ? cfg.dmg : 5; }
+                if (this.hasAbility('BIRCH TREE')) { this.treeAngle = 0; this.treeDmg = cfg ? cfg.dmg : 25; }
+                if (this.hasAbility('shapeshield')) { this.shieldSides = 3; this.shieldAngle = 0; this.shieldTimer = 25; }
+                if (this.hasAbility('poison')) { this.poisonDmg = cfg ? cfg.dmg : 0.5; }
+                if (this.hasAbility('freezer')) { this.freezeDmg = cfg ? cfg.dmg : 2.5; this.freezeHits = 0; }
+                if (this.hasAbility('burner')) { this.burnTrailDmg = 1; this.burnTimer = 0; }
+                if (this.hasAbility('deflector')) { this.deflectRed = 0.75; this.reflectFactor = 0.25; }
+                if (this.type === 'dvd') { this.dvdColor = `hsl(${Math.random() * 360}, 100%, 60%)`; }
+                
+                // New types
+                if (this.hasAbility('starstriker')) {
+                    this.starAngle = 0;
+                    this.starRPM = 12.5;
+                    this.starFireInterval = 1.25;
+                    this.starShotTimer = 0;
+                    this.starDmg = 5;
                 }
-                if (this.hasAbility('slapper')) {
-                    this.slapAngle = 0;
-                    this.slapDmg = cfg ? cfg.dmg : 5;
-                }
-                if (this.hasAbility('BIRCH TREE')) {
-                    this.treeAngle = 0;
-                    this.treeDmg = cfg ? cfg.dmg : 25;
-                }
-                if (this.hasAbility('shapeshield')) {
-                    this.shieldSides = 3;
-                    this.shieldAngle = 0;
-                    this.shieldTimer = 25;
-                }
-                if (this.hasAbility('poison')) {
-                    this.poisonDmg = cfg ? cfg.dmg : 0.5;
-                }
-                if (this.type === 'dvd') { 
-                    this.dvdColor = `hsl(${Math.random() * 360}, 100%, 60%)`; 
+                if (this.hasAbility('gunner')) {
+                    this.gunnerAngle = 0;
+                    this.gunnerRPM = 17.5;
+                    this.gunnerFireInterval = 0.48; // 125 bullets/min = ~2.083 bullets/sec
+                    this.gunnerShotTimer = 0;
+                    this.gunnerDmg = 0.5;
                 }
             }
 
             setupUltra() {
-                if (this.hasAbility('sword')) {
-                    this.swordDmg *= 2;
+                if (this.hasAbility('sword')) this.swordDmg *= 2;
+                if (this.hasAbility('laser')) { this.ultraLaserAngle = 0; this.laserDmg = 6; }
+                if (this.hasAbility('zen')) { this.zenHitCount = 0; this.zenDmg = 5; this.deathChance = 0.0001; }
+                if (this.hasAbility('heartstealer')) this.wandDmg *= 1.5;
+                if (this.hasAbility('dagger')) this.daggerDmg = 2.5;
+                if (this.hasAbility('splitter')) { this.splitTimer = 10; }
+                if (this.hasAbility('unarmed')) { 
+                    this.unarmedMin = 5;
+                    this.unarmedMax = 30;
                 }
-                if (this.hasAbility('laser')) {
-                    this.ultraLaserAngle = 0;
-                    this.laserDmg = 6; // Set damage to 6 for ultra laser
-                }
-                if (this.hasAbility('zen')) {
-                    this.zenHitCount = 0;
-                    this.zenDmg = 5;
-                    this.deathChance = 0.0001; // Changed from 0.001 to 0.01%
-                }
-                if (this.hasAbility('heartstealer')) {
-                    this.wandDmg *= 1.5;
-                }
-                if (this.hasAbility('dagger')) {
-                    this.daggerDmg = 2.5; 
+                if (this.hasAbility('demolitionist')) {
+                    this.ultraDemoDmg = this.demoDmg * 2;
                 }
             }
 
@@ -571,12 +696,53 @@
                 let minSpd = (cfg ? cfg.minSpd : 5);
                 let maxSpd = (cfg ? cfg.maxSpd : 30);
                 
+                // Ultra Demolitionist infection timer
+                if (this.isDemoInfected) {
+                    this.demoInfectedTimer -= 0.0166;
+                    if (this.demoInfectedTimer <= 0) {
+                        this.isDemoInfected = false;
+                    }
+                }
+                
+                // Deflector homing behavior
+                if (this.hasAbility('deflector') && this.frozenTimer <= 0) {
+                    let target = null; let minDist = Infinity;
+                    balls.forEach(b => {
+                        if (b === this || (this.teamId && b.teamId === this.teamId)) return;
+                        const d = Math.hypot(b.x - this.x, b.y - this.y);
+                        if (d < minDist) { minDist = d; target = b; }
+                    });
+                    if (target && minDist < 300) {
+                        const angle = Math.atan2(target.y - this.y, target.x - this.x);
+                        const force = 0.1;
+                        this.vx += Math.cos(angle) * force;
+                        this.vy += Math.sin(angle) * force;
+                    }
+                }
+
                 if (this.hasAbility('unarmed')) {
-                    minSpd = Math.max(minSpd, this.unarmedMin);
-                    maxSpd = this.unarmedMax;
+                    if (this.isUltra) {
+                        minSpd = this.unarmedMin;
+                        maxSpd = this.unarmedMax;
+                    } else {
+                        minSpd = Math.max(minSpd, this.unarmedMin);
+                        maxSpd = this.unarmedMax;
+                    }
                 } else if (this.hasAbility('saw')) {
                     minSpd = 10;
                     maxSpd = 15;
+                }
+
+                // Frozen State Logic
+                if (this.frozenTimer > 0) {
+                    this.frozenTimer -= 0.0166;
+                    this.vx = 0; this.vy = 0;
+                    
+                    if (this.frozenTimer <= 0) {
+                        createParticles(this.x, this.y, '#7dd3fc');
+                        this.vx = this.storedVx;
+                        this.vy = this.storedVy;
+                    }
                 }
 
                 if (this.isUltra && (this.hasAbility('zen'))) {
@@ -586,7 +752,7 @@
                        const d = Math.hypot(b.x - this.x, b.y - this.y);
                        if (d < minDist) { minDist = d; target = b; }
                    });
-                   if (target) {
+                   if (target && this.frozenTimer <= 0) {
                        const angle = Math.atan2(target.y - this.y, target.x - this.x);
                        const force = 0.8;
                        this.vx += Math.cos(angle) * force;
@@ -594,42 +760,37 @@
                    }
                 }
 
-                if (this.hasAbility('grabber') && this.handState === 'holding') {
-                    minSpd = 0; maxSpd = 1;
-                }
-
-                if (this.stunTimer > 0) {
-                    this.stunTimer -= 0.0166;
-                    this.vx *= 0.9; this.vy *= 0.9;
-                }
-
+                if (this.hasAbility('grabber') && this.handState === 'holding') { minSpd = 0; maxSpd = 1; }
+                if (this.stunTimer > 0) { this.stunTimer -= 0.0166; this.vx *= 0.9; this.vy *= 0.9; }
                 if (this.lifeSpan > 0) {
                     this.lifeSpan -= 0.0166;
                     if (this.lifeSpan <= 0) this.hp = 0;
                 }
 
-                if (this.hasAbility('black hole')) {
-                    const angle = Math.atan2(this.vy, this.vx);
-                    this.vx = Math.cos(angle) * (this.fixedSpeed || 0.4);
-                    this.vy = Math.sin(angle) * (this.fixedSpeed || 0.4);
-                    balls.forEach(other => {
-                        if (other === this || (this.teamId && this.teamId === other.teamId)) return;
-                        const dx = this.x - other.x;
-                        const dy = this.y - other.y;
-                        const dist = Math.hypot(dx, dy);
-                        const horizon = 250;
-                        if (dist < horizon && dist > 1) {
-                            const normalized = (horizon - dist) / horizon;
-                            const force = Math.pow(normalized, 3) * 1.5; 
-                            other.vx += (dx / dist) * force;
-                            other.vy += (dy / dist) * force;
-                        }
-                    });
-                } else {
-                    let speed = Math.hypot(this.vx, this.vy);
-                    const dragFactor = BASE_DRAG - (Math.pow(speed / maxSpd, 2) * 0.05);
-                    this.vx *= dragFactor;
-                    this.vy *= dragFactor;
+                if (this.frozenTimer <= 0) {
+                    if (this.hasAbility('black hole')) {
+                        const angle = Math.atan2(this.vy, this.vx);
+                        this.vx = Math.cos(angle) * (this.fixedSpeed || 0.4);
+                        this.vy = Math.sin(angle) * (this.fixedSpeed || 0.4);
+                        balls.forEach(other => {
+                            if (other === this || (this.teamId && this.teamId === other.teamId)) return;
+                            const dx = this.x - other.x;
+                            const dy = this.y - other.y;
+                            const dist = Math.hypot(dx, dy);
+                            const horizon = 250;
+                            if (dist < horizon && dist > 1) {
+                                const normalized = (horizon - dist) / horizon;
+                                const force = Math.pow(normalized, 3) * 1.5;
+                                other.vx += (dx / dist) * force;
+                                other.vy += (dy / dist) * force;
+                            }
+                        });
+                    } else {
+                        let speed = Math.hypot(this.vx, this.vy);
+                        const dragFactor = BASE_DRAG - (Math.pow(speed / maxSpd, 2) * 0.05);
+                        this.vx *= dragFactor;
+                        this.vy *= dragFactor;
+                    }
                 }
 
                 if (this.hasAbility('poison')) {
@@ -647,22 +808,32 @@
                         }
                     });
                 }
+
+                if (this.hasAbility('burner')) {
+                    this.burnTimer += 0.0166;
+                    if (this.burnTimer >= 0.33) {
+                        this.burnTimer = 0;
+                        pools.push({
+                            x: this.x, y: this.y, 
+                            r: this.radius * 2, 
+                            life: 1.5, 
+                            isBurnerTrail: true,
+                            dmg: this.burnTrailDmg,
+                            owner: this
+                        });
+                    }
+                }
                 
                 if (this.grabbedBy) {
                     const grabber = balls.find(b => b.id === this.grabbedBy);
                     if (grabber && grabber.handState === 'holding') {
-                        this.x = grabber.handX;
-                        this.y = grabber.handY;
-                        this.vx = 0; this.vy = 0;
-                    } else {
-                        this.grabbedBy = null;
-                    }
+                        this.x = grabber.handX; this.y = grabber.handY; this.vx = 0; this.vy = 0;
+                    } else { this.grabbedBy = null; }
                 } else {
-                    this.x += this.vx;
-                    this.y += this.vy;
+                    this.x += this.vx; this.y += this.vy;
                 }
 
-                if (!this.hasAbility('black hole')) {
+                if (!this.hasAbility('black hole') && this.frozenTimer <= 0) {
                     let speed = Math.hypot(this.vx, this.vy);
                     if (speed > maxSpd) {
                         this.vx = (this.vx / speed) * maxSpd;
@@ -687,16 +858,46 @@
                 }
 
                 pools.forEach(pool => {
-                    if (Math.hypot(this.x - pool.x, this.y - pool.y) < this.radius + pool.r) this.stunTimer = 0.5;
+                    if (pool.isBurnerTrail) {
+                         // Burner trails damage - NO LONGER BYPASSES IFRAMES
+                         if (pool.owner === this || (this.teamId && pool.owner.teamId === this.teamId)) return;
+                         if (Math.hypot(this.x - pool.x, this.y - pool.y) < this.radius + pool.r) {
+                             this.takeDamage(pool.dmg, pool.owner, false); // Changed from true to false
+                         }
+                    } else {
+                        if (Math.hypot(this.x - pool.x, this.y - pool.y) < this.radius + pool.r) this.stunTimer = 0.5;
+                    }
                 });
 
-                if (this.hasAbility('octoshooter')) {
+                if (this.hasAbility('octoshooter') && this.frozenTimer <= 0) {
                     const rotationSpeed = (this.octoRPM / 60) * (Math.PI * 2) / 60;
                     this.octoAngle += rotationSpeed;
                     this.octoShotTimer += 0.0166;
                     if (this.octoShotTimer >= this.octoFireInterval) {
                         this.octoShotTimer = 0;
                         this.octoFire();
+                    }
+                }
+                
+                // Starstriker logic
+                if (this.hasAbility('starstriker') && this.frozenTimer <= 0) {
+                    const rotationSpeed = (this.starRPM / 60) * (Math.PI * 2) / 60;
+                    this.starAngle += rotationSpeed;
+                    this.starShotTimer += 0.0166;
+                    if (this.starShotTimer >= this.starFireInterval) {
+                        this.starShotTimer = 0;
+                        this.starFire();
+                    }
+                }
+                
+                // Gunner logic
+                if (this.hasAbility('gunner') && this.frozenTimer <= 0) {
+                    const rotationSpeed = (this.gunnerRPM / 60) * (Math.PI * 2) / 60;
+                    this.gunnerAngle += rotationSpeed;
+                    this.gunnerShotTimer += 0.0166;
+                    if (this.gunnerShotTimer >= this.gunnerFireInterval) {
+                        this.gunnerShotTimer = 0;
+                        this.gunnerFire();
                     }
                 }
 
@@ -716,10 +917,9 @@
                     }
                 }
                 
-                if (this.isUltra && this.hasAbility('laser')) {
+                if (this.isUltra && this.hasAbility('laser') && this.frozenTimer <= 0) {
                     this.ultraLaserAngle += 0.05;
                     const bLen = width + height;
-                    // Create 6 lasers instead of 1
                     for (let i = 0; i < 6; i++) {
                         const angle = this.ultraLaserAngle + (i * Math.PI / 3);
                         const lx1 = this.x + Math.cos(angle) * bLen;
@@ -730,7 +930,7 @@
                         balls.forEach(target => {
                            if (target === this || (this.teamId && target.teamId === this.teamId)) return;
                            if (lineCircleCollision(lx1, ly1, lx2, ly2, target.x, target.y, target.radius)) {
-                               target.takeDamage(this.laserDmg, this, true); // Use this.laserDmg which is now 6
+                               target.takeDamage(this.laserDmg, this, true);
                            }
                         });
                     }
@@ -743,14 +943,34 @@
                 if (this.hasAbility('splitter')) {
                     this.splitTimer -= 0.0166;
                     if (this.splitTimer <= 0) {
-                        this.splitTimer = 7.5;
-                        const clone = new Ball(this.x, this.y, 'splitter', true, this.hp, -1, null, this.customConfig, this.splitterRootId);
-                        clone.teamId = this.teamId;
-                        balls.push(clone);
+                        if (balls.length < settings.maxBalls) {
+                            if (this.isUltra) {
+                                this.splitTimer = 10;
+                                // Ultra splitter now spawns ultra splitters
+                                for(let k=0; k<4; k++) {
+                                    if (balls.length >= settings.maxBalls) break;
+                                    const clone = new Ball(this.x, this.y, 'splitter', true, 20, -1, null, this.customConfig, this.splitterRootId);
+                                    clone.teamId = this.teamId;
+                                    clone.isUltra = true;
+                                    clone.radius *= 1.5;
+                                    clone.hp *= 2; clone.maxHp *= 2;
+                                    clone.color = rotateHue(clone.color, 75);
+                                    clone.setupUltra();
+                                    balls.push(clone);
+                                }
+                            } else {
+                                this.splitTimer = 7.5;
+                                const clone = new Ball(this.x, this.y, 'splitter', true, this.hp, -1, null, this.customConfig, this.splitterRootId);
+                                clone.teamId = this.teamId;
+                                balls.push(clone);
+                            }
+                        } else {
+                             this.splitTimer = 1;
+                        }
                     }
                 }
 
-                if (this.hasAbility('eggthrower')) {
+                if (this.hasAbility('eggthrower') && this.frozenTimer <= 0) {
                     if (this.eggCooldown > 0) this.eggCooldown -= 0.0166;
                     if (!this.isEggThrown) {
                         this.eggAngle += 0.15;
@@ -784,18 +1004,20 @@
                         if (this.eggReturnTimer > 60 || this.eggX < 0 || this.eggX > width || this.eggY < 0 || this.eggY > height - STATS_HEIGHT) this.resetEgg();
                     }
                 }
-                if (this.hasAbility('laser') && !this.isUltra) {
-                    this.laserTimer += 16.6; 
+                if (this.hasAbility('laser') && !this.isUltra && this.frozenTimer <= 0) {
+                    this.laserTimer += 16.6;
                     if (this.laserTimer >= this.laserCooldown) { this.shootLaser(); this.laserTimer = 0; }
                 }
-                if (this.hasAbility('randomizer')) {
+                if (this.hasAbility('randomizer') && this.frozenTimer <= 0) {
                     this.spawnTimer -= 0.0166;
                     if (this.spawnTimer <= 0) {
                         this.spawnTimer = this.baseSpawnTime;
-                        const randomType = TYPES[Math.floor(Math.random() * TYPES.length)];
-                        const b = new Ball(this.x, this.y, randomType, true, 50, 5, this.id);
-                        b.teamId = this.teamId;
-                        balls.push(b);
+                        if (balls.length < settings.maxBalls) {
+                            const randomType = TYPES[Math.floor(Math.random() * TYPES.length)];
+                            const b = new Ball(this.x, this.y, randomType, true, 50, 5, this.id);
+                            b.teamId = this.teamId;
+                            balls.push(b);
+                        }
                     }
                 }
                 if (this.hasAbility('nuke')) {
@@ -807,7 +1029,7 @@
                         if (this.chargeTimer <= 0) triggerGlobalNuke(this);
                     }
                 }
-                if (this.hasAbility('slammer')) {
+                if (this.hasAbility('slammer') && this.frozenTimer <= 0) {
                     this.slamTimer -= 0.0166;
                     if (this.slamTimer <= 0) { this.triggerSlamJump(); this.slamTimer = 3.0; }
                 }
@@ -832,6 +1054,43 @@
                         life: 120
                     });
                 }
+            }
+            
+            starFire() {
+                for (let i = 0; i < 4; i++) {
+                    const angle = this.starAngle + (i * Math.PI / 2);
+                    const bx = this.x + Math.cos(angle) * (this.radius + 15);
+                    const by = this.y + Math.sin(angle) * (this.radius + 15);
+                    stars.push({
+                        x: bx,
+                        y: by,
+                        vx: Math.cos(angle) * 12.5,
+                        vy: Math.sin(angle) * 12.5,
+                        dmg: this.starDmg,
+                        ownerId: this.id,
+                        teamId: this.teamId,
+                        life: 120,
+                        angle: angle,
+                        isHoming: true,
+                        hasHomed: false
+                    });
+                }
+            }
+            
+            gunnerFire() {
+                const bx = this.x + Math.cos(this.gunnerAngle) * (this.radius + 10);
+                const by = this.y + Math.sin(this.gunnerAngle) * (this.radius + 10);
+                bullets.push({
+                    x: bx,
+                    y: by,
+                    vx: Math.cos(this.gunnerAngle) * 15,
+                    vy: Math.sin(this.gunnerAngle) * 15,
+                    dmg: this.gunnerDmg,
+                    kb: 5,
+                    ownerId: this.id,
+                    teamId: this.teamId,
+                    life: 60
+                });
             }
 
             updateGrabber() {
@@ -862,7 +1121,7 @@
                                 this.grabTicks = 75;
                             } else {
                                 this.handState = 'returning';
-                                createParticles(this.handX, this.handY, '#fb923c'); 
+                                createParticles(this.handX, this.handY, '#fb923c');
                             }
                         }
                     });
@@ -928,18 +1187,15 @@
             }
 
             applyKnockback(angle, force) {
-                if (this.hasAbility('black hole') || this.hasAbility('zen')) return;
+                if (this.hasAbility('black hole') || this.hasAbility('zen') || this.frozenTimer > 0) return;
                 this.vx += Math.cos(angle) * force;
                 this.vy += Math.sin(angle) * force;
             }
 
             takeDamage(dmg, owner, bypassIframes = false) {
-                // Ultra Zen bypasses all iframes
-                if (owner && owner.isUltra && owner.hasAbility('zen')) {
-                    bypassIframes = true;
-                }
+                if (owner && owner.isUltra && owner.hasAbility('zen')) bypassIframes = true;
                 
-                if (this.hasAbility('zen') && !this.isUltra) return; 
+                if (this.hasAbility('zen') && !this.isUltra) return;
                 if (this.hitCooldown > 0 && !bypassIframes) return;
                 
                 if (owner) {
@@ -957,8 +1213,30 @@
                     dmg *= (1 - reduction);
                 }
 
+                if (this.hasAbility('deflector')) {
+                    // Changed from 1/15 to 1/85 chance to die
+                    if (Math.random() < (1/85)) {
+                        this.hp = 0;
+                        createParticles(this.x, this.y, '#94a3b8');
+                        return;
+                    }
+                    if (owner) {
+                        owner.takeDamage(dmg * this.reflectFactor, this, true);
+                    }
+                    // Changed from 1% to 2.5% deflection gain, 0.5% shield loss
+                    dmg *= (1 - this.deflectRed);
+                    this.deflectRed = Math.max(0.25, this.deflectRed - 0.005); // Min 0.25 (75% loss)
+                    this.reflectFactor += 0.025;
+                }
+
                 this.hp -= dmg;
                 if (!bypassIframes) createParticles(this.x, this.y, this.color);
+                
+                // Ultra Demolitionist infection
+                if (owner && owner.isUltra && owner.hasAbility('demolitionist')) {
+                    this.isDemoInfected = true;
+                    this.demoInfectedTimer = 5; // 5 seconds
+                }
                 
                 if (owner && !owner.hasAbility('saw')) {
                     let add = owner.customConfig ? owner.customConfig.dmgAdd : 1;
@@ -966,21 +1244,31 @@
                         if (owner.hasAbility('sword')) add *= 5;
                         if (owner.hasAbility('heartstealer')) add *= 2.5;
                         if (owner.hasAbility('dagger')) add *= 1;
+                        if (owner.hasAbility('unarmed')) add = 0.5; // Nerfed from +5 to +0.5
                     }
 
                     if (owner.hasAbility('octoshooter')) {
                         owner.octoRPM += 0.1 * add;
-                        owner.octoDmg = Math.max(0.2, owner.octoDmg - (0.05 * add));
-                        owner.octoKB = Math.max(0, owner.octoKB - (0.1 * add));
-                        owner.octoFireInterval = Math.max(0.02, owner.octoFireInterval - (0.05 * add));
+                        if (settings.noLimit) {
+                            owner.octoDmg = Math.max(0.1, owner.octoDmg - (0.05 * add));
+                            owner.octoKB = Math.max(0, owner.octoKB - (0.1 * add));
+                            owner.octoFireInterval = Math.max(0.01, owner.octoFireInterval - (0.05 * add));
+                        } else {
+                            owner.octoDmg = Math.max(0.2, owner.octoDmg - (0.05 * add));
+                            owner.octoKB = Math.max(0, owner.octoKB - (0.1 * add));
+                            owner.octoFireInterval = Math.max(0.02, owner.octoFireInterval - (0.05 * add));
+                        }
                     }
                     if (owner.hasAbility('sword')) owner.swordDmg += add;
-                    if (owner.hasAbility('laser')) owner.laserCooldown = Math.max(50, owner.laserCooldown - 20);
+                    if (owner.hasAbility('laser')) {
+                        if (settings.noLimit) owner.laserCooldown = Math.max(1, owner.laserCooldown - 20);
+                        else owner.laserCooldown = Math.max(50, owner.laserCooldown - 20);
+                    }
                     
                     if (owner.hasAbility('dagger')) {
                         if (owner.isUltra) {
                             owner.swingSpeed += (owner.swingSpeed * 0.50);
-                            owner.daggerDmg += 0.1; 
+                            owner.daggerDmg += 0.1;
                         } else {
                             owner.swingSpeed += (owner.swingSpeed * 0.10);
                         }
@@ -990,15 +1278,27 @@
                     if (owner.hasAbility('heartstealer')) { owner.wandDmg += (add * 0.5); owner.hp += Math.min(dmg, 20); }
                     if (owner.hasAbility('slammer')) owner.slamHits += add;
                     if (owner.hasAbility('eggthrower')) owner.eggDmg += (add * 3);
-                    if (owner.hasAbility('unarmed')) { owner.unarmedMin += 1; owner.unarmedMax += 1; }
+                    if (owner.hasAbility('unarmed')) { 
+                        if (owner.isUltra) {
+                            // Nerfed ultra unarmed gains
+                            owner.unarmedMin += 0.5;
+                            owner.unarmedMax += 0.5;
+                        } else {
+                            owner.unarmedMin += add; 
+                            owner.unarmedMax += add; 
+                        }
+                    }
                     if (owner.hasAbility('bonker')) { owner.critChance += 0.02; owner.critBonus += 2; }
                     if (owner.hasAbility('slapper')) owner.slapDmg *= 1.25;
                     if (owner.hasAbility('BIRCH TREE')) owner.treeDmg *= 1.25;
                     if (owner.hasAbility('poison')) owner.poisonDmg += 0.01;
+                    if (owner.hasAbility('freezer')) { owner.freezeDmg += 2.5; }
+                    if (owner.hasAbility('burner')) { owner.burnTrailDmg += 0.33; }
+                    if (owner.hasAbility('starstriker')) { owner.starDmg += 0.025; }
                 }
 
                 if (!bypassIframes) {
-                    let cd = 8;
+                    let cd = 10;
                     if (this.hasAbility('splitter')) {
                         const count = balls.filter(b => b.hasAbility('splitter') && b.splitterRootId === this.splitterRootId).length;
                         cd = Math.max(1, Math.floor(8 / count));
@@ -1011,54 +1311,87 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
 
-                if (this.isUltra) {
-                    ctx.shadowBlur = 15; ctx.shadowColor = '#db2777';
-                    ctx.strokeStyle = '#db2777';
-                    ctx.lineWidth = 4;
-                    ctx.beginPath(); ctx.arc(0, 0, this.radius + 2, 0, Math.PI * 2); ctx.stroke();
+                // DRAW AURA FOR BURNER
+                if (this.hasAbility('burner')) {
+                    ctx.save();
+                    if (!settings.legacy) {
+                        const grad = ctx.createRadialGradient(0, 0, this.radius, 0, 0, this.radius * 2);
+                        grad.addColorStop(0, 'rgba(249, 115, 22, 0.4)');
+                        grad.addColorStop(1, 'rgba(249, 115, 22, 0)');
+                        ctx.fillStyle = grad;
+                    } else {
+                        ctx.fillStyle = 'rgba(249, 115, 22, 0.2)';
+                    }
+                    ctx.beginPath(); ctx.arc(0, 0, this.radius * 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
                 }
 
+                // --- RENDERING STYLE SWITCH ---
+                if (!settings.legacy) {
+                    // Modern Render
+                    if (this.isUltra) {
+                        ctx.shadowBlur = 20; ctx.shadowColor = '#db2777';
+                    } else if (this.type === 'freezer') {
+                         ctx.shadowBlur = 10; ctx.shadowColor = '#7dd3fc';
+                    }
+
+                    if (this.hasAbility('black hole')) {
+                        const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 45);
+                        grad.addColorStop(0, '#4f46e5'); grad.addColorStop(0.5, 'black'); grad.addColorStop(1, 'transparent');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI*2); ctx.fill();
+                    } else if (this.hasAbility('poison')) {
+                        ctx.shadowBlur = 10; ctx.shadowColor = '#65a30d';
+                        ctx.beginPath(); ctx.arc(0, 0, 75, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(132, 204, 22, 0.1)'; ctx.fill();
+                    } else {
+                        // Standard Modern Ball
+                        if (this.type !== 'dvd' && !this.hasAbility('saw') && !this.hasAbility('shapeshield')) {
+                             const grad = ctx.createRadialGradient(-this.radius/3, -this.radius/3, 0, 0, 0, this.radius);
+                             grad.addColorStop(0, '#ffffff');
+                             grad.addColorStop(1, this.color);
+                             ctx.fillStyle = grad;
+                             ctx.beginPath(); ctx.arc(0, 0, this.visualRadius || this.radius, 0, Math.PI * 2); ctx.fill();
+                        }
+                    }
+
+                } else {
+                    // Legacy Render (Flat)
+                    if (this.isUltra) { ctx.strokeStyle = '#db2777'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, this.radius + 2, 0, Math.PI * 2); ctx.stroke(); }
+                    
+                    if (this.hasAbility('black hole')) {
+                        const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 45);
+                        grad.addColorStop(0, 'rgba(79, 70, 229, 0.7)'); grad.addColorStop(0.4, 'rgba(0, 0, 0, 1)'); grad.addColorStop(1, 'transparent');
+                        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI * 2); ctx.fill();
+                    }
+                    if (this.hasAbility('poison')) {
+                         ctx.beginPath(); ctx.arc(0, 0, 75, 0, Math.PI * 2);
+                         ctx.fillStyle = 'rgba(132, 204, 22, 0.15)'; ctx.fill(); ctx.strokeStyle = 'rgba(132, 204, 22, 0.3)'; ctx.stroke();
+                    }
+                    if (this.type !== 'dvd' && !this.hasAbility('saw') && !this.hasAbility('shapeshield')) {
+                        ctx.beginPath(); ctx.arc(0, 0, this.visualRadius || this.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = this.color; ctx.fill();
+                    }
+                }
+
+                // --- SHARED GEOMETRY (Legacy & Modern) ---
                 if (this.isUltra && this.hasAbility('laser')) {
                     const bLen = width + height;
                     ctx.save();
                     ctx.rotate(this.ultraLaserAngle);
                     ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
-                    // Draw 6 lasers instead of 1
                     for (let i = 0; i < 6; i++) {
                         const angle = i * Math.PI / 3;
-                        ctx.beginPath();
-                        ctx.moveTo(Math.cos(angle) * bLen, Math.sin(angle) * bLen);
-                        ctx.lineTo(-Math.cos(angle) * bLen, -Math.sin(angle) * bLen);
-                        ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(Math.cos(angle) * bLen, Math.sin(angle) * bLen); ctx.lineTo(-Math.cos(angle) * bLen, -Math.sin(angle) * bLen); ctx.stroke();
                     }
                     ctx.restore();
-                }
-
-                if (this.hasAbility('poison')) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 75, 0, Math.PI * 2); 
-                    ctx.fillStyle = 'rgba(132, 204, 22, 0.15)';
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(132, 204, 22, 0.3)';
-                    ctx.stroke();
-                }
-
-                if (this.hasAbility('black hole')) {
-                    const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, 45);
-                    grad.addColorStop(0, 'rgba(79, 70, 229, 0.7)');
-                    grad.addColorStop(0.4, 'rgba(0, 0, 0, 1)');
-                    grad.addColorStop(1, 'transparent');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath(); ctx.arc(0, 0, 45, 0, Math.PI * 2); ctx.fill();
                 }
 
                 if (this.isSplitterOG) {
                     ctx.save();
                     ctx.translate(0, -this.radius - 15 - Math.sin(Date.now()*0.01)*5);
                     ctx.fillStyle = '#14b8a6';
-                    ctx.beginPath();
-                    ctx.moveTo(-6, 0); ctx.lineTo(6, 0); ctx.lineTo(0, 8);
-                    ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(6, 0); ctx.lineTo(0, 8); ctx.closePath(); ctx.fill();
                     ctx.restore();
                 }
 
@@ -1070,39 +1403,47 @@
                         const theta = this.shieldAngle + (i * 2 * Math.PI / sides);
                         const px = Math.cos(theta) * polyRadius;
                         const py = Math.sin(theta) * polyRadius;
-                        if (i === 0) ctx.moveTo(px, py);
-                        else ctx.lineTo(px, py);
+                        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
                     }
                     ctx.closePath();
-                    ctx.strokeStyle = '#22d3ee';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
+                    ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2; ctx.stroke();
                 }
 
                 if (this.hasAbility('octoshooter')) {
-                    ctx.save();
-                    ctx.rotate(this.octoAngle);
-                    ctx.fillStyle = '#1e293b';
+                    ctx.save(); ctx.rotate(this.octoAngle); ctx.fillStyle = '#1e293b';
                     for (let i = 0; i < 8; i++) {
                         const angle = i * Math.PI / 4;
-                        ctx.save();
-                        ctx.rotate(angle);
-                        ctx.fillRect(this.radius - 5, -4, 18, 8);
-                        ctx.restore();
+                        ctx.save(); ctx.rotate(angle); ctx.fillRect(this.radius - 5, -4, 18, 8); ctx.restore();
                     }
+                    ctx.restore();
+                }
+                
+                // Starstriker cannons
+                if (this.hasAbility('starstriker')) {
+                    ctx.save(); ctx.rotate(this.starAngle); ctx.fillStyle = '#c4b5fd';
+                    for (let i = 0; i < 4; i++) {
+                        const angle = i * Math.PI / 2;
+                        ctx.save(); ctx.rotate(angle); ctx.fillRect(this.radius - 5, -6, 20, 12); ctx.restore();
+                    }
+                    ctx.restore();
+                }
+                
+                // Gunner barrel
+                if (this.hasAbility('gunner')) {
+                    ctx.save(); ctx.rotate(this.gunnerAngle); ctx.fillStyle = '#fbbf24';
+                    ctx.fillRect(this.radius - 3, -3, 15, 6);
                     ctx.restore();
                 }
 
                 if (this.hasAbility('BIRCH TREE')) {
                    ctx.beginPath(); ctx.arc(0, 0, this.visualRadius || this.radius, 0, Math.PI * 2);
-                   ctx.fillStyle = '#f8fafc'; ctx.fill(); 
+                   ctx.fillStyle = '#f8fafc'; ctx.fill();
                    ctx.fillStyle = 'black';
                    ctx.beginPath(); ctx.arc(-5, -5, 2, 0, Math.PI*2); ctx.fill();
                    ctx.beginPath(); ctx.arc(8, 2, 3, 0, Math.PI*2); ctx.fill();
                    ctx.beginPath(); ctx.arc(-2, 10, 2, 0, Math.PI*2); ctx.fill();
                 } else if (this.hasAbility('saw')) {
-                    ctx.rotate(this.sawAngle);
-                    ctx.fillStyle = '#cbd5e1';
+                    ctx.rotate(this.sawAngle); ctx.fillStyle = '#cbd5e1';
                     ctx.beginPath();
                     const teeth = 12;
                     for (let i = 0; i < teeth * 2; i++) {
@@ -1110,94 +1451,92 @@
                         const a = (i / (teeth * 2)) * Math.PI * 2;
                         ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
                     }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.stroke();
                 } else if (this.type === 'dvd') {
                     ctx.shadowBlur = 10; ctx.shadowColor = this.dvdColor;
                     ctx.fillStyle = this.dvdColor; ctx.font = "bold 16px Arial";
-                    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                    ctx.fillText("DVD", 0, -2);
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("DVD", 0, -2);
                     ctx.beginPath(); ctx.ellipse(0, 8, 14, 4, 0, 0, Math.PI * 2);
                     ctx.strokeStyle = this.dvdColor; ctx.lineWidth = 1.5; ctx.stroke();
-                    ctx.shadowBlur = 0; 
+                    ctx.shadowBlur = 0;
+                }
+
+                // Team/Clone outlines
+                if (settings.legacy) {
+                    if (this.teamId === 'alpha') { ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 5; }
+                    else if (this.teamId === 'omega') { ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 5; }
+                    else { ctx.strokeStyle = this.isClone || this.lifeSpan > 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; }
+                    if (this.type !== 'dvd' && !this.hasAbility('saw') && !this.hasAbility('shapeshield')) ctx.stroke();
                 } else {
-                    ctx.beginPath(); ctx.arc(0, 0, this.visualRadius || this.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = this.color; ctx.fill();
+                    // Modern Outlines
+                    if (this.teamId === 'alpha') { ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0,0,this.radius,0,Math.PI*2); ctx.stroke(); }
+                    else if (this.teamId === 'omega') { ctx.strokeStyle = '#f87171'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0,0,this.radius,0,Math.PI*2); ctx.stroke(); }
+                }
+
+                // Text Label - Nuke ball text changed to black
+                if (this.hasAbility('nuke')) {
+                    ctx.fillStyle = 'black';
+                } else if (this.hasAbility('eggthrower') || this.hasAbility('saw') || this.hasAbility('BIRCH TREE') || this.type === 'freezer') {
+                    ctx.fillStyle = 'black';
+                } else {
+                    ctx.fillStyle = 'white';
                 }
                 
-                if (this.teamId === 'alpha') { ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 5; }
-                else if (this.teamId === 'omega') { ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 5; }
-                else { ctx.strokeStyle = this.isClone || this.lifeSpan > 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; }
-                if (this.type !== 'dvd' && !this.hasAbility('saw') && !this.hasAbility('shapeshield')) ctx.stroke();
-
-                ctx.fillStyle = (this.hasAbility('eggthrower') || this.hasAbility('saw') || this.hasAbility('BIRCH TREE')) ? 'black' : 'white';
-                ctx.font = `bold ${this.hasAbility('gargantuan') || this.isUltra ? 16 : 10}px monospace`;
+                ctx.font = `bold ${this.hasAbility('gargantuan') || this.isUltra || this.type === 'freezer' ? 16 : 10}px 'JetBrains Mono'`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 
                 let label = formatNum(this.hp);
                 if (this.hasAbility('nuke')) label = this.isCharging ? "!!!" : Math.ceil(this.nukeTimer);
                 if (this.type !== 'dvd' || this.isUltra) ctx.fillText(label, 0, 0);
 
+                // Frozen Icon
+                if (this.frozenTimer > 0) {
+                     ctx.fillStyle = '#0ea5e9'; ctx.font = "20px serif"; ctx.fillText("❄️", 0, -this.radius - 10);
+                }
+
                 const offset = this.radius + 10;
-                if (this.hasAbility('sword')) { 
-                    ctx.rotate(this.swordAngle); 
-                    ctx.fillStyle = '#cbd5e1'; 
-                    const sW = this.isUltra ? 50 : 25;
-                    const sH = this.isUltra ? 16 : 8;
-                    ctx.fillRect(offset, -sH/2, sW, sH); 
+                // --- WEAPONS ---
+                if (this.hasAbility('sword')) {
+                    ctx.rotate(this.swordAngle); ctx.fillStyle = '#cbd5e1';
+                    const sW = this.isUltra ? 50 : 25; const sH = this.isUltra ? 16 : 8;
+                    ctx.fillRect(offset, -sH/2, sW, sH);
                 }
                 if (this.hasAbility('dark magician')) { ctx.rotate(this.bookAngle); ctx.fillStyle = '#fef3c7'; ctx.fillRect(offset, -8, 16, 16); }
                 if (this.hasAbility('heartstealer')) { ctx.rotate(this.wandAngle); ctx.fillStyle = '#f9a8d4'; ctx.fillRect(offset, -2, 18, 4); }
                 
-                if (this.hasAbility('dagger')) { 
-                    ctx.rotate(this.swingAngle); 
-                    ctx.fillStyle = '#fde047'; 
-                    const dW = this.isUltra ? 15 * 3.33 : 15;
-                    const dH = this.isUltra ? 4 * 3.33 : 4;
-                    ctx.fillRect(offset, -dH/2, dW, dH); 
+                if (this.hasAbility('dagger')) {
+                    ctx.rotate(this.swingAngle); ctx.fillStyle = '#fde047';
+                    const dW = this.isUltra ? 15 * 3.33 : 15; const dH = this.isUltra ? 4 * 3.33 : 4;
+                    ctx.fillRect(offset, -dH/2, dW, dH);
                 }
 
-                if (this.hasAbility('bonker')) { 
-                    ctx.rotate(this.hammerAngle); 
-                    ctx.fillStyle = '#78716c'; ctx.fillRect(offset, -3, 20, 6); 
-                    ctx.fillStyle = '#44403c'; ctx.fillRect(offset + 20, -10, 12, 20); 
+                if (this.hasAbility('bonker')) {
+                    ctx.rotate(this.hammerAngle);
+                    ctx.fillStyle = '#78716c'; ctx.fillRect(offset, -3, 20, 6);
+                    ctx.fillStyle = '#44403c'; ctx.fillRect(offset + 20, -10, 12, 20);
                 }
                 if (this.hasAbility('slapper')) {
-                    ctx.rotate(this.slapAngle);
-                    ctx.fillStyle = '#fecdd3';
-                    ctx.beginPath();
-                    ctx.roundRect(offset, -8, 25, 16, 4);
-                    ctx.fill();
+                    ctx.rotate(this.slapAngle); ctx.fillStyle = '#fecdd3';
+                    ctx.beginPath(); ctx.roundRect(offset, -8, 25, 16, 4); ctx.fill();
                 }
                 if (this.hasAbility('BIRCH TREE')) {
                     ctx.rotate(this.treeAngle);
-                    ctx.fillStyle = '#f1f5f9'; ctx.fillRect(offset, -4, 45, 8); 
-                    ctx.fillStyle = 'black'; 
-                    ctx.fillRect(offset + 10, -2, 4, 2);
-                    ctx.fillRect(offset + 25, 1, 3, 2);
-                    ctx.fillRect(offset + 35, -3, 4, 3);
-                    ctx.fillStyle = '#15803d'; 
-                    ctx.beginPath(); ctx.arc(offset + 45, 0, 12, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#f1f5f9'; ctx.fillRect(offset, -4, 45, 8);
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(offset + 10, -2, 4, 2); ctx.fillRect(offset + 25, 1, 3, 2); ctx.fillRect(offset + 35, -3, 4, 3);
+                    ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(offset + 45, 0, 12, 0, Math.PI*2); ctx.fill();
                 }
 
                 ctx.restore();
 
                 if (this.hasAbility('grabber') && this.handState !== 'idle') {
                     ctx.save();
-                    ctx.strokeStyle = 'rgba(251, 146, 60, 0.5)';
-                    ctx.lineWidth = 4;
-                    ctx.beginPath();
-                    ctx.moveTo(this.x, this.y);
-                    ctx.lineTo(this.handX, this.handY);
-                    ctx.stroke();
+                    ctx.strokeStyle = 'rgba(251, 146, 60, 0.5)'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.handX, this.handY); ctx.stroke();
 
-                    ctx.translate(this.handX, this.handY);
-                    ctx.rotate(this.handAngle);
+                    ctx.translate(this.handX, this.handY); ctx.rotate(this.handAngle);
                     ctx.fillStyle = '#fb923c';
-                    ctx.beginPath();
-                    ctx.moveTo(0, -10); ctx.lineTo(15, -10); ctx.lineTo(15, 10); ctx.lineTo(0, 10); ctx.closePath();
-                    ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(15, -10); ctx.lineTo(15, 10); ctx.lineTo(0, 10); ctx.closePath(); ctx.fill();
                     ctx.restore();
                 }
 
@@ -1211,6 +1550,10 @@
                 let s = [];
                 if (this.isUltra) s.push({ k: 'MODE', v: 'ULTRA' });
                 if (this.teamId) s.push({ k: 'team', v: this.teamId });
+                if (this.isDemoInfected) s.push({ k: 'infected', v: Math.ceil(this.demoInfectedTimer) + 's' });
+                if (this.hasAbility('freezer')) s.push({ k: 'ice', v: formatNum(this.freezeDmg) }, { k: 'hits', v: `${this.freezeHits}/5` });
+                if (this.hasAbility('burner')) s.push({ k: 'burn', v: formatNum(this.burnTrailDmg) + '/s' });
+                if (this.hasAbility('deflector')) s.push({ k: 'block', v: Math.floor(this.deflectRed * 100) + '%' }, { k: 'refl', v: Math.floor(this.reflectFactor * 100) + '%' });
                 if (this.hasAbility('octoshooter')) {
                     s.push({ k: 'rpm', v: formatNum(this.octoRPM) });
                     s.push({ k: 'fire', v: formatNum(this.octoFireInterval) + 's' });
@@ -1221,7 +1564,7 @@
                 if (this.hasAbility('grabber')) s.push({ k: 'grab', v: formatNum(this.grabDmg) });
                 if (this.hasAbility('splitter')) {
                     const count = balls.filter(b => b.hasAbility('splitter') && b.splitterRootId === this.splitterRootId).length;
-                    s.push({ k: 'swarm', v: count }, { k: 'power', v: (100/count).toFixed(0) + '%' });
+                    s.push({ k: 'swarm', v: count }, { k: 'split', v: Math.ceil(this.splitTimer) + 's' });
                 }
                 if (this.hasAbility('sword')) s.push({ k: 'sword', v: formatNum(this.swordDmg) });
                 if (this.hasAbility('laser')) {
@@ -1239,8 +1582,14 @@
                 if (this.hasAbility('eggthrower')) s.push({ k: 'egg', v: formatNum(this.eggDmg) });
                 if (this.hasAbility('poison')) s.push({ k: 'aura', v: '75px' }, { k: 'dot', v: formatNum(this.poisonDmg) });
                 if (this.isUltra && this.hasAbility('zen')) s.push({ k: 'death%', v: (this.deathChance * 100).toFixed(2) + '%' });
+                if (this.hasAbility('starstriker')) s.push({ k: 'stars', v: formatNum(this.starDmg) }, { k: 'rpm', v: formatNum(this.starRPM) });
+                if (this.hasAbility('gunner')) s.push({ k: 'bullets', v: '125/min' }, { k: 'dmg', v: formatNum(this.gunnerDmg) });
                 
-                if (this.hasAbility('unarmed')) s.push({ k: 'dmg', v: formatNum(Math.hypot(this.vx, this.vy)) });
+                if (this.hasAbility('unarmed')) {
+                     const spd = Math.hypot(this.vx, this.vy);
+                     if (this.isUltra) s.push({ k: 'run', v: formatNum(spd) }, { k: 'slam', v: formatNum(spd * 1.75) }); // Nerfed from 3.33 to 1.75
+                     else s.push({ k: 'dmg', v: formatNum(spd) });
+                }
                 else s.push({ k: 'spd', v: formatNum(Math.hypot(this.vx, this.vy)) });
                 return s;
             }
@@ -1283,17 +1632,65 @@
         }
 
         function createParticles(x, y, color) {
+            if (balls.length > 80 && Math.random() < 0.5) return;
             const count = color === '#450a0a' ? 12 : 4;
             for (let i = 0; i < count; i++) particles.push({ x, y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6, life: 1, color });
         }
 
         function spawnBall(type, customConfig = null) {
+            if (balls.length >= settings.maxBalls) return;
             const x = Math.random() * (width - 200) + 100;
-            const y = Math.random() * (height - STATS_HEIGHT - 200) + 100; 
+            const y = Math.random() * (height - STATS_HEIGHT - 200) + 100;
             balls.push(new Ball(x, y, type, false, 100, -1, null, customConfig));
         }
 
-        function clearArena() { balls = []; particles = []; lasers = []; bullets = []; pools = []; visuals = []; screenShake = 0; }
+        function clearArena() { balls = []; particles = []; lasers = []; bullets = []; pools = []; visuals = []; stars = []; screenShake = 0; }
+
+        function updateStars() {
+            for (let i = stars.length - 1; i >= 0; i--) {
+                const s = stars[i];
+                
+                // Homing logic
+                if (s.isHoming && !s.hasHomed) {
+                    let target = null; let minDist = Infinity;
+                    balls.forEach(b => {
+                        if (b.id === s.ownerId || (s.teamId && s.teamId === b.teamId)) return;
+                        const d = Math.hypot(s.x - b.x, s.y - b.y);
+                        if (d < minDist) { minDist = d; target = b; }
+                    });
+                    
+                    if (target && minDist < 300) {
+                        const angle = Math.atan2(target.y - s.y, target.x - s.x);
+                        s.vx = Math.cos(angle) * 12.5;
+                        s.vy = Math.sin(angle) * 12.5;
+                        s.hasHomed = true;
+                    }
+                }
+                
+                s.x += s.vx; s.y += s.vy; s.life--;
+                
+                let hit = false;
+                for (let j = 0; j < balls.length; j++) {
+                    const target = balls[j];
+                    if (target.id === s.ownerId || (s.teamId && s.teamId === target.teamId)) continue;
+                    if (Math.hypot(s.x - target.x, s.y - target.y) < target.radius + 4) {
+                        const owner = balls.find(o => o.id === s.ownerId);
+                        target.takeDamage(s.dmg, owner);
+                        const kbA = Math.atan2(target.y - s.y, target.x - s.x);
+                        target.applyKnockback(kbA, 8);
+                        hit = true; break;
+                    }
+                }
+                
+                if (hit || s.life <= 0 || s.x < 0 || s.x > width || s.y < 0 || s.y > height - STATS_HEIGHT) stars.splice(i, 1);
+                else {
+                    ctx.fillStyle = '#f0abfc';
+                    if (!settings.legacy) { ctx.shadowBlur = 5; ctx.shadowColor = '#f0abfc'; }
+                    ctx.beginPath(); ctx.arc(s.x, s.y, 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
 
         function checkCollisions() {
             for (let i = 0; i < balls.length; i++) {
@@ -1312,18 +1709,22 @@
                         }
 
                         if (b1.hasAbility('zen') && b1.isUltra) {
-                            b2.takeDamage(b1.zenDmg, b1, true); // Ultra Zen bypasses iframes
+                            b2.takeDamage(b1.zenDmg, b1, true);
                             b1.zenHitCount++;
-                            b1.deathChance += 0.0001; // Changed from 0.001 to 0.0001 (0.01%)
+                            b1.deathChance += 0.0001;
                             if (Math.random() < b1.deathChance) b1.hp = 0;
                         }
                         if (b2.hasAbility('zen') && b2.isUltra) {
-                            b1.takeDamage(b2.zenDmg, b2, true); // Ultra Zen bypasses iframes
+                            b1.takeDamage(b2.zenDmg, b2, true);
                             b2.zenHitCount++;
-                            b2.deathChance += 0.0001; // Changed from 0.001 to 0.0001 (0.01%)
+                            b2.deathChance += 0.0001;
                             if (Math.random() < b2.deathChance) b2.hp = 0;
                         }
 
+                        // Demo infected explosion
+                        if (b1.isDemoInfected) triggerDemolition(b1, b2, true);
+                        if (b2.isDemoInfected) triggerDemolition(b2, b1, true);
+                        
                         if (b1.hasAbility('demolitionist')) triggerDemolition(b1, b2);
                         if (b2.hasAbility('demolitionist')) triggerDemolition(b2, b1);
                         
@@ -1338,50 +1739,94 @@
                         if (b1.hasAbility('shapeshield')) b1.shieldSides++;
                         if (b2.hasAbility('shapeshield')) b2.shieldSides++;
 
-                        if (b1.hasAbility('splitter')) {
+                        if (b1.hasAbility('splitter') && !b1.isMiniSplit) {
                             const count = balls.filter(b => b.hasAbility('splitter') && b.splitterRootId === b1.splitterRootId).length;
                             b2.takeDamage(1 / count, b1);
                         }
-                        if (b2.hasAbility('splitter')) {
+                        if (b2.hasAbility('splitter') && !b2.isMiniSplit) {
                             const count = balls.filter(b => b.hasAbility('splitter') && b.splitterRootId === b2.splitterRootId).length;
                             b1.takeDamage(1 / count, b2);
+                        }
+                        
+                        // Freezer Logic
+                        if (b1.hasAbility('freezer')) {
+                            b1.freezeHits++;
+                            b2.takeDamage(b1.freezeDmg, b1);
+                            if (b1.freezeHits >= 5) {
+                                if (b2.frozenTimer <= 0) {
+                                    b2.storedVx = b2.vx;
+                                    b2.storedVy = b2.vy;
+                                }
+                                b2.frozenTimer = 5;
+                                b1.freezeHits = 0;
+                                visuals.push({ x: b2.x, y: b2.y, r: 0, maxR: 40, life: 1, color: '#7dd3fc' });
+                            }
+                        }
+                        if (b2.hasAbility('freezer')) {
+                            b2.freezeHits++;
+                            b1.takeDamage(b2.freezeDmg, b2);
+                            if (b2.freezeHits >= 5) {
+                                if (b1.frozenTimer <= 0) {
+                                    b1.storedVx = b1.vx;
+                                    b1.storedVy = b1.vy;
+                                }
+                                b1.frozenTimer = 5;
+                                b2.freezeHits = 0;
+                                visuals.push({ x: b1.x, y: b1.y, r: 0, maxR: 40, life: 1, color: '#7dd3fc' });
+                            }
                         }
 
                         let push = 0.4;
                         let push1 = push; let push2 = push;
-                        if (!b1.hasAbility('black hole') && !b1.hasAbility('saw')) { 
-                            b1.vx -= Math.cos(angle) * push2; b1.vy -= Math.sin(angle) * push2; 
-                            b1.vx *= COLLISION_BOOST; b1.vy *= COLLISION_BOOST; 
+                        if (!b1.hasAbility('black hole') && !b1.hasAbility('saw')) {
+                            b1.vx -= Math.cos(angle) * push2; b1.vy -= Math.sin(angle) * push2;
+                            b1.vx *= COLLISION_BOOST; b1.vy *= COLLISION_BOOST;
                         }
-                        if (!b2.hasAbility('black hole') && !b2.hasAbility('saw')) { 
-                            b2.vx += Math.cos(angle) * push1; b2.vy += Math.sin(angle) * push1; 
-                            b2.vx *= COLLISION_BOOST; b2.vy *= COLLISION_BOOST; 
+                        if (!b2.hasAbility('black hole') && !b2.hasAbility('saw')) {
+                            b2.vx += Math.cos(angle) * push1; b2.vy += Math.sin(angle) * push1;
+                            b2.vx *= COLLISION_BOOST; b2.vy *= COLLISION_BOOST;
                         }
 
                         if (b1.hasAbility('gargantuan')) b2.takeDamage(b2.maxHp * b1.gargantuanDmgMod, b1);
                         if (b2.hasAbility('gargantuan')) b1.takeDamage(b1.maxHp * b2.gargantuanDmgMod, b2);
                         
-                        if (b1.hasAbility('unarmed') && !b2.hasAbility('shapeshield') && !b2.hasAbility('BIRCH TREE')) b2.takeDamage(Math.hypot(b1.vx, b1.vy), b1);
-                        if (b2.hasAbility('unarmed') && !b1.hasAbility('shapeshield') && !b1.hasAbility('BIRCH TREE')) b1.takeDamage(Math.hypot(b2.vx, b2.vy), b2);
+                        // Nerfed ultra unarmed damage from 3.33 to 1.75
+                        if (b1.hasAbility('unarmed') && !b2.hasAbility('shapeshield') && !b2.hasAbility('BIRCH TREE')) {
+                            let dmg = Math.hypot(b1.vx, b1.vy);
+                            if (b1.isUltra) dmg = dmg * 1.75; // Nerfed from 3.33
+                            if (b1.hasAbility('deflector')) dmg = 0;
+                            b2.takeDamage(dmg, b1);
+                        }
+                        if (b2.hasAbility('unarmed') && !b1.hasAbility('shapeshield') && !b1.hasAbility('BIRCH TREE')) {
+                            let dmg = Math.hypot(b2.vx, b2.vy);
+                            if (b2.isUltra) dmg = dmg * 1.75; // Nerfed from 3.33
+                            if (b2.hasAbility('deflector')) dmg = 0;
+                            b1.takeDamage(dmg, b2);
+                        }
                     }
                     checkWeaponHit(b1, b2); checkWeaponHit(b2, b1);
                 }
             }
         }
 
-        function triggerDemolition(demo, target) {
-            if (demo.hitCooldown > 0) return;
+        function triggerDemolition(demo, target, isInfected = false) {
+            if (demo.hitCooldown > 0 && !isInfected) return;
             const blastRadius = demo.radius * 2.5;
+            const dmg = isInfected ? (demo.demoDmg || 5) : demo.demoDmg;
             visuals.push({ x: demo.x, y: demo.y, r: 0, maxR: blastRadius, life: 1, color: '#f97316' });
             balls.forEach(b => {
                 if (b === demo || (demo.teamId && demo.teamId === b.teamId)) return;
                 const d = Math.hypot(b.x - demo.x, b.y - demo.y);
                 if (d < blastRadius + b.radius) {
-                    b.takeDamage(demo.demoDmg, demo);
+                    b.takeDamage(dmg, demo);
                     const angle = Math.atan2(b.y - demo.y, b.x - demo.x);
                     b.applyKnockback(angle, 12);
                 }
             });
+            // Infected balls also damage themselves
+            if (isInfected) {
+                demo.takeDamage(dmg * 0.5, demo);
+            }
             demo.hitCooldown = 15;
         }
 
@@ -1403,10 +1848,10 @@
 
         function checkWeaponHit(attacker, victim) {
             if (victim.id === attacker.creatorId || attacker.id === victim.creatorId) return;
-            if (attacker.teamId && attacker.teamId === victim.teamId) return; 
+            if (attacker.teamId && attacker.teamId === victim.teamId) return;
             if (attacker.hasAbility('splitter') && victim.hasAbility('splitter') && attacker.splitterRootId === victim.splitterRootId) return;
 
-            let hit = false; 
+            let hit = false;
             let damage = 0;
             let kbForce = 0;
             let kbAngle = 0;
@@ -1428,28 +1873,28 @@
 
             if (attacker.hasAbility('sword')) {
                 const sLen = attacker.isUltra ? 50 : 25;
-                const sX = attacker.x + Math.cos(attacker.swordAngle) * (offset + sLen/2); 
+                const sX = attacker.x + Math.cos(attacker.swordAngle) * (offset + sLen/2);
                 const sY = attacker.y + Math.sin(attacker.swordAngle) * (offset + sLen/2);
                 tryHit(sX, sY, 12, attacker.swordDmg, 5);
             }
             if (!hit && attacker.hasAbility('dagger')) {
                 const dW = attacker.isUltra ? 15 * 3.33 : 15;
-                const dX = attacker.x + Math.cos(attacker.swingAngle) * (offset + dW/2); 
+                const dX = attacker.x + Math.cos(attacker.swingAngle) * (offset + dW/2);
                 const dY = attacker.y + Math.sin(attacker.swingAngle) * (offset + dW/2);
                 tryHit(dX, dY, attacker.isUltra ? 4 * 3.33 : 4, attacker.daggerDmg, 3, attacker.isUltra);
             }
             if (!hit && attacker.hasAbility('heartstealer')) {
-                const wX = attacker.x + Math.cos(attacker.wandAngle) * (offset + 5); 
+                const wX = attacker.x + Math.cos(attacker.wandAngle) * (offset + 5);
                 const wY = attacker.y + Math.sin(attacker.wandAngle) * (offset + 5);
                 if (tryHit(wX, wY, 10, attacker.wandDmg, 4)) {
                    if (attacker.isUltra) triggerUltraHeartExplosion(attacker, victim);
                 }
             }
             if (!hit && attacker.hasAbility('dark magician')) {
-                const bX = attacker.x + Math.cos(attacker.bookAngle) * offset; 
+                const bX = attacker.x + Math.cos(attacker.bookAngle) * offset;
                 const bY = attacker.y + Math.sin(attacker.bookAngle) * offset;
                 if (tryHit(bX, bY, 8, 2, 4)) {
-                    if (!attacker.isClone && balls.length < 100) {
+                    if (!attacker.isClone && balls.length < settings.maxBalls) {
                         const b = new Ball(attacker.x, attacker.y, victim.type, true, attacker.nextCloneHp, -1, attacker.id);
                         b.teamId = attacker.teamId; balls.push(b);
                     }
@@ -1483,21 +1928,24 @@
         }
 
         function updateStatsUI() {
-            if (balls.length === 0) { statsPanel.innerHTML = '<div class="text-[10px] opacity-50 lowercase p-2">empty arena</div>'; return; }
+            if (balls.length === 0) { statsPanel.innerHTML = '<div class="text-[10px] opacity-50 lowercase p-2 w-full text-center">arena empty</div>'; return; }
             const sortedBalls = [...balls].sort((a, b) => b.hp - a.hp);
             statsPanel.innerHTML = sortedBalls.map(b => {
                 const subStats = b.getStats();
                 const hpPercent = Math.max(0, (b.hp / b.maxHp) * 100);
                 let borderColor = (b.teamId === 'alpha') ? '#3b82f6' : (b.teamId === 'omega' ? '#ef4444' : (b.hasAbility('black hole') ? '#4f46e5' : b.color));
                 if (b.isUltra) borderColor = '#db2777';
+                
+                const frozenClass = b.frozenTimer > 0 ? 'ring-2 ring-sky-400' : '';
 
                 return `
-                    <div class="stats-card p-2 text-[10px] rounded shadow-sm border-l-4 flex-shrink-0" style="border-color: ${borderColor}">
+                    <div class="stats-card p-2 text-[10px] rounded bg-slate-800/80 border-l-4 flex-shrink-0 relative ${frozenClass}" style="border-color: ${borderColor}">
+                        ${b.frozenTimer > 0 ? '<div class="absolute top-1 right-1 text-xs">❄️</div>' : ''}
                         <div class="flex justify-between items-start gap-1">
                             <div class="font-bold lowercase truncate w-20 text-white leading-none">${b.type}${b.isClone ? '*' : ''}</div>
                             <span class="font-mono text-blue-400 bg-blue-900/30 px-1 rounded">${formatNum(b.hp)}</span>
                         </div>
-                        <div class="w-full bg-slate-800 h-1 mt-1 rounded-full overflow-hidden">
+                        <div class="w-full bg-slate-900 h-1 mt-1 rounded-full overflow-hidden">
                             <div class="h-full bg-blue-500 transition-all duration-300" style="width: ${hpPercent}%"></div>
                         </div>
                         <div class="flex flex-col gap-0.5 mt-1.5">
@@ -1505,6 +1953,7 @@
                                 <div class="flex justify-between gap-2 uppercase tracking-tighter">
                                    <span class="opacity-40 text-[9px]">${s.k}:</span>
                                    <span class="font-bold text-slate-200">${s.v}</span>
+                                   ${s.k2 ? `<span class="opacity-40 text-[9px] ml-1">${s.k2}:</span><span class="font-bold text-slate-200">${s.v2}</span>` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -1517,21 +1966,61 @@
 
         let lastStatUpdate = 0;
         function loop(timestamp) {
-            ctx.save();
-            if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.9; }
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, width, height);
-            ctx.fillStyle = '#111827'; ctx.fillRect(0, height - STATS_HEIGHT, width, STATS_HEIGHT);
+            if (settings.legacy) {
+                ctx.save();
+                if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.9; }
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = '#111827'; ctx.fillRect(0, height - STATS_HEIGHT, width, STATS_HEIGHT);
+            } else {
+                ctx.save();
+                if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.9; }
+                const grad = ctx.createLinearGradient(0, 0, 0, height);
+                grad.addColorStop(0, '#020617'); grad.addColorStop(1, '#1e1b4b');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, width, height);
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+                const gridSize = 50;
+                ctx.beginPath();
+                for(let x=0; x<width; x+=gridSize) { ctx.moveTo(x,0); ctx.lineTo(x,height); }
+                for(let y=0; y<height; y+=gridSize) { ctx.moveTo(0,y); ctx.lineTo(width,y); }
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.5)'; ctx.fillRect(0, height - STATS_HEIGHT, width, STATS_HEIGHT);
+            }
 
             for (let i = visuals.length - 1; i >= 0; i--) {
                 const v = visuals[i]; v.life -= 0.05; v.r += (v.maxR - v.r) * 0.2;
                 if (v.life <= 0) visuals.splice(i, 1);
-                else { ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, Math.PI * 2); ctx.fillStyle = v.color || `rgba(249, 115, 22, ${v.life * 0.4})`; ctx.fill(); }
+                else {
+                    ctx.beginPath(); ctx.arc(v.x, v.y, v.r, 0, Math.PI * 2);
+                    if (settings.legacy) ctx.fillStyle = v.color || `rgba(249, 115, 22, ${v.life * 0.4})`;
+                    else {
+                        ctx.shadowBlur = 10; ctx.shadowColor = v.color;
+                        ctx.fillStyle = v.color || `rgba(249, 115, 22, ${v.life})`;
+                        ctx.globalAlpha = v.life;
+                    }
+                    ctx.fill();
+                    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+                }
             }
             for (let i = pools.length - 1; i >= 0; i--) {
                 const p = pools[i]; p.life -= 0.0166;
                 if (p.life <= 0) pools.splice(i, 1);
-                else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = `rgba(254, 240, 138, ${Math.min(0.3, p.life)})`; ctx.fill(); }
+                else {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    if (p.isBurnerTrail) {
+                         if (settings.legacy) ctx.fillStyle = `rgba(249, 115, 22, ${Math.min(0.3, p.life)})`;
+                         else ctx.fillStyle = `rgba(255, 100, 0, ${Math.min(0.2, p.life)})`;
+                    } else {
+                         ctx.fillStyle = `rgba(254, 240, 138, ${Math.min(0.3, p.life)})`;
+                    }
+                    ctx.fill();
+                }
             }
+            
+            // Update and draw stars
+            updateStars();
+            
             for (let i = bullets.length - 1; i >= 0; i--) {
                 const b = bullets[i];
                 b.x += b.vx; b.y += b.vy; b.life--;
@@ -1552,7 +2041,9 @@
                 if (hit || b.life <= 0 || b.x < 0 || b.x > width || b.y < 0 || b.y > height - STATS_HEIGHT) bullets.splice(i, 1);
                 else {
                     ctx.fillStyle = '#fde047';
+                    if (!settings.legacy) { ctx.shadowBlur = 5; ctx.shadowColor = '#fde047'; }
                     ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0;
                 }
             }
             for (let i = particles.length - 1; i >= 0; i--) {
@@ -1563,13 +2054,15 @@
             ctx.globalAlpha = 1;
             for (let i = lasers.length - 1; i >= 0; i--) {
                 const l = lasers[i]; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = l.life/2;
+                if (!settings.legacy) { ctx.shadowBlur = 10; ctx.shadowColor = '#ef4444'; }
                 ctx.beginPath(); ctx.moveTo(l.x1, l.y1); ctx.lineTo(l.x2, l.y2); ctx.stroke();
+                ctx.shadowBlur = 0;
                 l.life--; if (l.life <= 0) lasers.splice(i, 1);
             }
             checkCollisions();
             for (let i = balls.length - 1; i >= 0; i--) {
                 const b = balls[i]; b.update(); b.draw();
-                if (b.hp <= 0) { 
+                if (b.hp <= 0) {
                     if (b.hasAbility('grabber') && b.grabTargetId) {
                         const victim = balls.find(v => v.id === b.grabTargetId);
                         if (victim) victim.grabbedBy = null;
@@ -1577,7 +2070,7 @@
                     if (b.hasAbility('splitter') && b.isSplitterOG) {
                         balls = balls.filter(other => !(other.hasAbility('splitter') && other.splitterRootId === b.id));
                     }
-                    createParticles(b.x, b.y, b.color); balls.splice(i, 1); 
+                    createParticles(b.x, b.y, b.color); balls.splice(i, 1);
                 }
             }
             ctx.restore();

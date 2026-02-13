@@ -249,6 +249,7 @@
                 <button onclick="spawnBall('nuke')" class="px-2 py-2 bg-white text-black hover:bg-slate-200 rounded-lg text-xs font-bold transition lowercase">nuke</button>
                 <button onclick="spawnBall('starstriker')" class="px-2 py-2 bg-violet-600/20 border border-violet-500/30 hover:bg-violet-500/40 rounded-lg text-xs transition lowercase">starstriker</button>
                 <button onclick="spawnBall('gunner')" class="px-2 py-2 bg-amber-600/20 border border-amber-500/30 hover:bg-amber-500/40 rounded-lg text-xs transition lowercase">gunner</button>
+                <button onclick="spawnBall('assistant')" class="col-span-2 px-2 py-2.5 bg-indigo-500/20 border border-indigo-400 text-indigo-300 hover:bg-indigo-500/30 rounded-lg text-xs font-bold transition lowercase">assistant (team only)</button>
             </div>
         </div>
 
@@ -303,6 +304,12 @@
         let visuals = [];
         let stars = [];
         
+        // Team Buffs for Assistant Ball
+        let teamBuffs = {
+            alpha: { dmg: 0, reduction: 0 },
+            omega: { dmg: 0, reduction: 0 }
+        };
+        
         let screenShake = 0;
         const BASE_DRAG = 0.999; 
         const BOUNCE = 1.0; 
@@ -310,7 +317,7 @@
         const BALL_RADIUS = 22;
         const STATS_HEIGHT = 120;
 
-        const TYPES = ['sword', 'laser', 'unarmed', 'dark magician', 'dagger', 'heartstealer', 'slammer', 'eggthrower', 'demolitionist', 'black hole', 'zen', 'nuke', 'gargantuan', 'randomizer', 'saw', 'splitter', 'grabber', 'bonker', 'slapper', 'BIRCH TREE', 'shapeshield', 'poison', 'octoshooter', 'freezer', 'burner', 'deflector', 'starstriker', 'gunner'];
+        const TYPES = ['sword', 'laser', 'unarmed', 'dark magician', 'dagger', 'heartstealer', 'slammer', 'eggthrower', 'demolitionist', 'black hole', 'zen', 'nuke', 'gargantuan', 'randomizer', 'saw', 'splitter', 'grabber', 'bonker', 'slapper', 'BIRCH TREE', 'shapeshield', 'poison', 'octoshooter', 'freezer', 'burner', 'deflector', 'starstriker', 'gunner', 'assistant'];
 
         function formatNum(n) {
             if (n === null || n === undefined) return '0';
@@ -589,6 +596,7 @@
                     case 'deflector': return '#94a3b8';
                     case 'starstriker': return '#8b5cf6';
                     case 'gunner': return '#d97706';
+                    case 'assistant': return '#6366f1';
                     default: return '#ffffff';
                 }
             }
@@ -672,6 +680,10 @@
                     this.gunnerFireInterval = 0.48; // 125 bullets/min = ~2.083 bullets/sec
                     this.gunnerShotTimer = 0;
                     this.gunnerDmg = 0.5;
+                }
+                if (this.hasAbility('assistant')) {
+                    this.assistantDmgBuff = 0.5;
+                    this.assistantRedBuff = 0.005; // 0.5%
                 }
             }
 
@@ -855,6 +867,12 @@
                     if (this.hasAbility('gargantuan')) screenShake = Math.max(screenShake, 10);
                     if (this.hasAbility('shapeshield')) this.shieldSides++;
                     if (this.type === 'dvd') this.dvdColor = `hsl(${Math.random() * 360}, 100%, 60%)`;
+                    
+                    if (this.hasAbility('assistant') && this.teamId) {
+                        const buffs = teamBuffs[this.teamId];
+                        buffs.dmg = Math.min(5, buffs.dmg + 0.5);
+                        buffs.reduction = Math.min(0.1, buffs.reduction + 0.005);
+                    }
                 }
 
                 pools.forEach(pool => {
@@ -1193,6 +1211,15 @@
             }
 
             takeDamage(dmg, owner, bypassIframes = false) {
+                if (this.hp <= 0) return;
+                
+                let finalDmg = dmg;
+                
+                // Team damage reduction buff
+                if (this.teamId) {
+                    finalDmg *= (1 - teamBuffs[this.teamId].reduction);
+                }
+
                 if (owner && owner.isUltra && owner.hasAbility('zen')) bypassIframes = true;
                 
                 if (this.hasAbility('zen') && !this.isUltra) return;
@@ -1310,6 +1337,25 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
+
+                // Modern Glow/Shadow for Weapons
+                if (!settings.legacy) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                }
+
+                // Assistant halo
+                if (this.hasAbility('assistant')) {
+                    ctx.save();
+                    ctx.strokeStyle = '#6366f1';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([5, 5]);
+                    ctx.rotate(Date.now() * 0.002);
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
 
                 // DRAW AURA FOR BURNER
                 if (this.hasAbility('burner')) {
@@ -1497,17 +1543,66 @@
                 const offset = this.radius + 10;
                 // --- WEAPONS ---
                 if (this.hasAbility('sword')) {
-                    ctx.rotate(this.swordAngle); ctx.fillStyle = '#cbd5e1';
-                    const sW = this.isUltra ? 50 : 25; const sH = this.isUltra ? 16 : 8;
-                    ctx.fillRect(offset, -sH/2, sW, sH);
+                    ctx.rotate(this.swordAngle);
+                    const sLen = this.isUltra ? 50 : 25;
+                    const sH = this.isUltra ? 16 : 8;
+                    
+                    // Energy blade look
+                    const grad = ctx.createLinearGradient(offset, 0, offset + sLen, 0);
+                    grad.addColorStop(0, this.color);
+                    grad.addColorStop(0.5, '#ffffff');
+                    grad.addColorStop(1, this.color);
+                    
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.moveTo(offset, -sH/2);
+                    ctx.lineTo(offset + sLen, 0);
+                    ctx.lineTo(offset, sH/2);
+                    ctx.fill();
+                    
+                    // Crossguard
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(offset, -sH, 4, sH * 2);
+                }
+                if (this.hasAbility('laser')) {
+                    const lAngle = this.vx > 0 ? 0 : Math.PI;
+                    ctx.save();
+                    ctx.rotate(lAngle);
+                    // Cannon Barrel
+                    ctx.fillStyle = '#334155';
+                    ctx.fillRect(this.radius, -6, 15, 12);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.radius, -6, 15, 12);
+                    // Energy Core
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.radius + 7, 0, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
                 }
                 if (this.hasAbility('dark magician')) { ctx.rotate(this.bookAngle); ctx.fillStyle = '#fef3c7'; ctx.fillRect(offset, -8, 16, 16); }
                 if (this.hasAbility('heartstealer')) { ctx.rotate(this.wandAngle); ctx.fillStyle = '#f9a8d4'; ctx.fillRect(offset, -2, 18, 4); }
                 
                 if (this.hasAbility('dagger')) {
-                    ctx.rotate(this.swingAngle); ctx.fillStyle = '#fde047';
-                    const dW = this.isUltra ? 15 * 3.33 : 15; const dH = this.isUltra ? 4 * 3.33 : 4;
-                    ctx.fillRect(offset, -dH/2, dW, dH);
+                    ctx.rotate(this.swingAngle);
+                    const dW = this.isUltra ? 15 * 3.33 : 15;
+                    const dH = this.isUltra ? 4 * 3.33 : 4;
+                    
+                    // Curved energy blade
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = dH;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, offset + dW/2, -0.4, 0.4);
+                    ctx.stroke();
+                    
+                    // White core
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = dH / 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, offset + dW/2, -0.3, 0.3);
+                    ctx.stroke();
                 }
 
                 if (this.hasAbility('bonker')) {
@@ -1589,6 +1684,10 @@
                      const spd = Math.hypot(this.vx, this.vy);
                      if (this.isUltra) s.push({ k: 'run', v: formatNum(spd) }, { k: 'slam', v: formatNum(spd * 1.75) }); // Nerfed from 3.33 to 1.75
                      else s.push({ k: 'dmg', v: formatNum(spd) });
+                }
+                if (this.hasAbility('assistant') && this.teamId) {
+                    const buffs = teamBuffs[this.teamId];
+                    s.push({ k: 'buff', v: '+' + formatNum(buffs.dmg) }, { k: 'res', v: (buffs.reduction * 100).toFixed(1) + '%' });
                 }
                 else s.push({ k: 'spd', v: formatNum(Math.hypot(this.vx, this.vy)) });
                 return s;
